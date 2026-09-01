@@ -100,6 +100,7 @@ def init_db():
             campus TEXT,
             reg_no TEXT,
             name TEXT,
+            father_name TEXT,
             designation TEXT,
             basic_salary REAL DEFAULT 0,
             increment REAL DEFAULT 0,
@@ -140,6 +141,10 @@ def init_db():
   if "leaving_month" not in columns:
     execute_non_query(
         "ALTER TABLE employees ADD COLUMN leaving_month TEXT DEFAULT '';"
+    )
+  if "father_name" not in columns:
+    execute_non_query(
+        "ALTER TABLE employees ADD COLUMN father_name TEXT DEFAULT '';"
     )
 
 
@@ -190,8 +195,8 @@ def auto_migrate_employees():
         if name:
           execute_non_query(
               """
-                    INSERT INTO employees (campus, reg_no, name, designation, basic_salary, increment, joining_month, status, leaving_month)
-                    VALUES (?, ?, ?, ?, ?, 0, 'July 2026', 'Active', '');
+                    INSERT INTO employees (campus, reg_no, name, father_name, designation, basic_salary, increment, joining_month, status, leaving_month)
+                    VALUES (?, ?, ?, '', ?, ?, 0, 'July 2026', 'Active', '');
                 """,
               (camp, r_no, name, desig, b_sal),
           )
@@ -285,6 +290,7 @@ else:
         "Main Navigation",
         [
             "Monthly Salary Sheet",
+            "Add New Employee",
             "Staff Directory (Master & Increment)",
             "Employee Yearly Ledger",
             "Salary Slip Generator",
@@ -301,8 +307,98 @@ else:
       st.session_state.authenticated = False
       st.rerun()
 
-  # 1. STAFF DIRECTORY TAB
-  if nav_mode == "Staff Directory (Master & Increment)":
+  # 1. ADD NEW EMPLOYEE FORM TAB
+  if nav_mode == "Add New Employee":
+    st.markdown(
+        "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<div class='sub-header'>Add New Employee & Staff Registration</div>",
+        unsafe_allow_html=True,
+    )
+
+    col1, col2 = st.columns(2)
+    with col1:
+      new_campus = st.selectbox(
+          "Select Campus for New Employee",
+          [
+              "Kharadar",
+              "Kharadar Extension",
+              "Tower Campus",
+              "Sony Campus",
+              "Park View",
+          ],
+          index=[
+              "Kharadar",
+              "Kharadar Extension",
+              "Tower Campus",
+              "Sony Campus",
+              "Park View",
+          ].index(selected_campus),
+      )
+      new_reg_no = st.text_input("Registration / Employee ID (e.g. 002)")
+      new_name = st.text_input("Staff Name")
+      new_father_name = st.text_input("Father's Name")
+
+    with col2:
+      new_designation = st.text_input("Designation (e.g. Teacher, Clerk)")
+      new_basic_salary = st.number_input(
+          "Basic Salary (Rs.)", min_value=0.0, step=1000.0, value=25000.0
+      )
+      new_joining_month = st.selectbox(
+          "Joining Month (Start Month)", list(MONTH_ORDER.keys()), index=7
+      )
+      new_status = st.selectbox(
+          "Employment Status", ["Active", "Left"], index=0
+      )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button(
+        "➕ Register New Employee in Database",
+        type="primary",
+        use_container_width=True,
+    ):
+      if not new_name.strip() or not new_reg_no.strip():
+        st.error(
+            "⚠️ Please fill in at least the Employee ID and Staff Name fields!"
+        )
+      else:
+        # Check if Reg No already exists in this campus
+        existing_check = run_query(
+            "SELECT id FROM employees WHERE campus = ? AND reg_no = ?;",
+            (new_campus, new_reg_no),
+        )
+        if existing_check:
+          st.error(
+              f"⚠️ Employee ID '{new_reg_no}' already exists in {new_campus}"
+              " campus! Please use a unique ID."
+          )
+        else:
+          execute_non_query(
+              """
+                    INSERT INTO employees (campus, reg_no, name, father_name, designation, basic_salary, increment, joining_month, status, leaving_month)
+                    VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, '');
+                """,
+              (
+                  new_campus,
+                  new_reg_no,
+                  new_name,
+                  new_father_name,
+                  new_designation,
+                  new_basic_salary,
+                  new_joining_month,
+                  new_status,
+              ),
+          )
+          st.success(
+              f"✅ Successfully registered {new_name} ({new_designation}) for"
+              f" {new_campus} campus starting from {new_joining_month}!"
+          )
+          st.balloons()
+
+  # 2. STAFF DIRECTORY TAB
+  elif nav_mode == "Staff Directory (Master & Increment)":
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
@@ -315,7 +411,7 @@ else:
 
     emp_rows = run_query(
         """
-            SELECT id, reg_no, name, designation, basic_salary, increment, joining_month, status, leaving_month 
+            SELECT id, reg_no, name, father_name, designation, basic_salary, increment, joining_month, status, leaving_month 
             FROM employees WHERE campus = ? ORDER BY id;
         """,
         (selected_campus,),
@@ -328,6 +424,7 @@ else:
               "ID",
               "Reg No",
               "Name",
+              "Father's Name",
               "Designation",
               "Basic Salary",
               "Yearly Increment",
@@ -342,6 +439,7 @@ else:
               "ID",
               "Reg No",
               "Name",
+              "Father's Name",
               "Designation",
               "Basic Salary",
               "Yearly Increment",
@@ -382,13 +480,16 @@ else:
           continue
         execute_non_query(
             """
-                    INSERT INTO employees (campus, reg_no, name, designation, basic_salary, increment, joining_month, status, leaving_month)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+                    INSERT INTO employees (campus, reg_no, name, father_name, designation, basic_salary, increment, joining_month, status, leaving_month)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """,
             (
                 selected_campus,
                 str(row["Reg No"]) if pd.notna(row["Reg No"]) else "",
                 str(row["Name"]),
+                str(row["Father's Name"])
+                if pd.notna(row["Father's Name"])
+                else "",
                 str(row["Designation"]) if pd.notna(row["Designation"]) else "",
                 float(row["Basic Salary"])
                 if pd.notna(row["Basic Salary"])
@@ -408,7 +509,7 @@ else:
       st.success("✅ Staff Master Directory updated successfully!")
       st.rerun()
 
-  # 2. MONTHLY SALARY SHEET TAB
+  # 3. MONTHLY SALARY SHEET TAB
   elif nav_mode == "Monthly Salary Sheet":
     st.markdown(
         f"<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
@@ -699,7 +800,7 @@ else:
             use_container_width=True,
         )
 
-  # 3. EMPLOYEE YEARLY LEDGER TAB
+  # 4. EMPLOYEE YEARLY LEDGER TAB
   elif nav_mode == "Employee Yearly Ledger":
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
@@ -764,7 +865,7 @@ else:
     else:
       st.info("No employee records available for this campus yet.")
 
-  # 4. SALARY SLIP GENERATOR TAB
+  # 5. SALARY SLIP GENERATOR TAB
   elif nav_mode == "Salary Slip Generator":
     logo_html = ""
     if os.path.exists("LOGO.png"):
@@ -983,7 +1084,7 @@ else:
     else:
       st.info("No salary records available for this month.")
 
-  # 5. SUMMARY TAB
+  # 6. SUMMARY TAB
   elif nav_mode == "Summary":
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
