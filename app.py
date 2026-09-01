@@ -634,7 +634,6 @@ else:
           else 0,
           axis=1,
       )
-      # 3 late days = 1 day deduction (Integer division, no fraction until full 3 days)
       df["Deduction Late"] = df["Late Days"].apply(
           lambda x: int(x // 3) if pd.notna(x) else 0
       )
@@ -811,14 +810,7 @@ else:
 
         pdf.set_font("Arial", "B", 16)
         pdf.set_text_color(44, 22, 84)
-        pdf.cell(
-            0,
-            8,
-            "EXCELLENCE MODEL SCHOOL",
-            0,
-            1,
-            "C",
-        )
+        pdf.cell(0, 8, "EXCELLENCE MODEL SCHOOL", 0, 1, "C")
         pdf.set_font("Arial", "B", 11)
         pdf.set_text_color(75, 85, 99)
         pdf.cell(
@@ -844,6 +836,10 @@ else:
         pdf.set_line_width(0.6)
         pdf.line(10, pdf.get_y(), 287, pdf.get_y())
         pdf.ln(6)
+
+        grand_basic_pdf = 0
+        grand_ded_pdf = 0
+        grand_final_pdf = 0
 
         for cat in categories:
           cat_data = all_edited_combined[
@@ -883,38 +879,24 @@ else:
           pdf.set_text_color(0, 0, 0)
           fill_row = False
 
+          sub_basic = cat_data["Basic Salary"].sum()
+          sub_ded = cat_data["Total Deduction Amount"].sum()
+          sub_final = cat_data["Total Final Salary"].sum()
+
+          grand_basic_pdf += sub_basic
+          grand_ded_pdf += sub_ded
+          grand_final_pdf += sub_final
+
           for idx, row in cat_data.iterrows():
             if fill_row:
               pdf.set_fill_color(243, 244, 246)
             else:
               pdf.set_fill_color(255, 255, 255)
 
+            pdf.cell(widths[0], 6, str(row["Reg No"]), 1, 0, "C", fill=True)
+            pdf.cell(widths[1], 6, str(row["Name"])[:23], 1, 0, "L", fill=True)
             pdf.cell(
-                widths[0],
-                6,
-                str(row["Reg No"]),
-                1,
-                0,
-                "C",
-                fill=True,
-            )
-            pdf.cell(
-                widths[1],
-                6,
-                str(row["Name"])[:23],
-                1,
-                0,
-                "L",
-                fill=True,
-            )
-            pdf.cell(
-                widths[2],
-                6,
-                str(row["Designation"])[:20],
-                1,
-                0,
-                "L",
-                fill=True,
+                widths[2], 6, str(row["Designation"])[:20], 1, 0, "L", fill=True
             )
             pdf.cell(
                 widths[3],
@@ -925,24 +907,8 @@ else:
                 "R",
                 fill=True,
             )
-            pdf.cell(
-                widths[4],
-                6,
-                str(row["Absent Days"]),
-                1,
-                0,
-                "C",
-                fill=True,
-            )
-            pdf.cell(
-                widths[5],
-                6,
-                str(row["Late Days"]),
-                1,
-                0,
-                "C",
-                fill=True,
-            )
+            pdf.cell(widths[4], 6, str(row["Absent Days"]), 1, 0, "C", fill=True)
+            pdf.cell(widths[5], 6, str(row["Late Days"]), 1, 0, "C", fill=True)
             pdf.cell(
                 widths[6],
                 6,
@@ -953,22 +919,10 @@ else:
                 fill=True,
             )
             pdf.cell(
-                widths[7],
-                6,
-                str(row["Days in Month"]),
-                1,
-                0,
-                "C",
-                fill=True,
+                widths[7], 6, str(row["Days in Month"]), 1, 0, "C", fill=True
             )
             pdf.cell(
-                widths[8],
-                6,
-                f"{row['Per Day']:,.1f}",
-                1,
-                0,
-                "R",
-                fill=True,
+                widths[8], 6, f"{row['Per Day']:,.1f}", 1, 0, "R", fill=True
             )
             pdf.cell(
                 widths[9],
@@ -991,7 +945,163 @@ else:
             pdf.ln()
             fill_row = not fill_row
 
-          pdf.ln(4)
+          pdf.set_font("Arial", "B", 9)
+          pdf.set_fill_color(229, 231, 235)
+          pdf.cell(sum(widths[:3]), 6, f"Total {cat}:", 1, 0, "R", fill=True)
+          pdf.cell(widths[3], 6, f"{sub_basic:,.2f}", 1, 0, "R", fill=True)
+          pdf.cell(sum(widths[4:9]), 6, "", 1, 0, "C", fill=True)
+          pdf.cell(widths[9], 6, f"{sub_ded:,.2f}", 1, 0, "R", fill=True)
+          pdf.cell(widths[10], 6, f"{sub_final:,.2f}", 1, 0, "R", fill=True)
+          pdf.ln(8)
+
+        pdf.set_font("Arial", "B", 10)
+        pdf.set_fill_color(44, 22, 84)
+        pdf.set_text_color(255, 255, 255)
+        grand_label = (
+            f"GRAND TOTAL ({selected_campus.upper()} BRANCH) -- Basic: Rs."
+            f" {grand_basic_pdf:,.2f} | Deductions: Rs. {grand_ded_pdf:,.2f} |"
+            f" Final Payout: Rs. {grand_final_pdf:,.2f}"
+        )
+        pdf.cell(sum(widths), 8, grand_label, 1, 1, "C", fill=True)
+        pdf.ln(10)
+
+        # ---- SUMMARY OF SALARY TABLE (All Campuses Network Wide) ----
+        pdf.set_font("Arial", "B", 13)
+        pdf.set_text_color(44, 22, 84)
+        pdf.cell(
+            0,
+            8,
+            f"SUMMARY (SALARY) - {month_filter}",
+            0,
+            1,
+            "C",
+        )
+        pdf.ln(3)
+
+        pdf.set_font("Arial", "B", 9)
+        pdf.set_fill_color(0, 0, 0)
+        pdf.set_text_color(255, 255, 255)
+
+        sum_cols = [
+            "S.NO",
+            "CAMPUSES",
+            "TOTAL SALARY",
+            "DEDUCTION",
+            "CONSIDERED",
+            "PLUS 1",
+            "PAYABLE",
+        ]
+        sum_widths = [14, 65, 38, 35, 35, 30, 40]
+
+        for i, c_name in enumerate(sum_cols):
+          pdf.cell(sum_widths[i], 7, c_name, 1, 0, "C", fill=True)
+        pdf.ln()
+
+        pdf.set_font("Arial", "", 9)
+        pdf.set_text_color(0, 0, 0)
+
+        list_campuses = [
+            "Kharadar",
+            "Kharadar Extension",
+            "Tower Campus",
+            "Sony Campus",
+            "Park View",
+        ]
+        display_campus_names = [
+            "KHARADAR",
+            "KHARADAR EXTENSION",
+            "TOWER",
+            "SONY MORNING",
+            "PARK VIEW",
+        ]
+
+        net_tot_sal = 0
+        net_tot_ded = 0
+        net_tot_cred = 0
+        net_tot_plus1 = 0
+        net_tot_payable = 0
+
+        for idx_c, cmp_name in enumerate(list_campuses):
+          c_rows = run_query(
+              """
+                    SELECT basic_salary, absent_days, late_days, days_in_month, considered_red_days 
+                    FROM salaries WHERE campus = %s AND month_year = %s;
+                """,
+              (cmp_name, month_filter),
+          )
+
+          c_sal_sum = 0
+          c_ded_sum = 0
+          c_cred_sum = 0
+          c_p1_sum = 0
+          c_pay_sum = 0
+
+          if c_rows:
+            for r in c_rows:
+              b_sal, abs_d, late_d, dim, cred_d = r
+              per_day = b_sal / dim if dim > 0 else 0
+              auto_ded_late = int(late_d // 3)
+              net_units = max(0, (abs_d + auto_ded_late) - cred_d)
+              tot_ded = net_units * per_day
+              cred_amt = cred_d * per_day
+              p_one = 1 if abs_d == 0 and late_d == 0 else 0
+              plus_amt = p_one * per_day
+              final_pay = b_sal - tot_ded + plus_amt
+
+              c_sal_sum += b_sal
+              c_ded_sum += tot_ded
+              c_cred_sum += cred_amt
+              c_p1_sum += plus_amt
+              c_pay_sum += final_pay
+
+          net_tot_sal += c_sal_sum
+          net_tot_ded += c_ded_sum
+          net_tot_cred += c_cred_sum
+          net_tot_plus1 += c_p1_sum
+          net_tot_payable += c_pay_sum
+
+          p1_str = f"{c_p1_sum:,.0f}" if c_p1_sum > 0 else "-"
+          ded_str = f"{c_ded_sum:,.0f}" if c_ded_sum > 0 else "0"
+          cred_str = f"{c_cred_sum:,.0f}" if c_cred_sum > 0 else "0"
+          sal_str = f"{c_sal_sum:,.0f}" if c_sal_sum > 0 else "0"
+          pay_str = f"{c_pay_sum:,.0f}" if c_pay_sum > 0 else "0"
+
+          pdf.cell(
+              sum_widths[0], 6, str(idx_c + 1), 1, 0, "C"
+          )  # S.No
+          pdf.cell(
+              sum_widths[1], 6, display_campus_names[idx_c], 1, 0, "L"
+          )  # Campus Name
+          pdf.cell(sum_widths[2], 6, sal_str, 1, 0, "R")  # Total Salary
+          pdf.cell(sum_widths[3], 6, ded_str, 1, 0, "R")  # Deduction
+          pdf.cell(sum_widths[4], 6, cred_str, 1, 0, "R")  # Considered
+          pdf.cell(sum_widths[5], 6, p1_str, 1, 0, "C")  # Plus 1
+          pdf.cell(sum_widths[6], 6, pay_str, 1, 0, "R")  # Payable
+          pdf.ln()
+
+        # Summary Total Row
+        pdf.set_font("Arial", "B", 9.5)
+        pdf.set_fill_color(0, 0, 0)
+        pdf.set_text_color(255, 255, 255)
+        pdf.cell(
+            sum_widths[0] + sum_widths[1], 7, "TOTAL", 1, 0, "C", fill=True
+        )
+        pdf.cell(
+            sum_widths[2], 7, f"{net_tot_sal:,.0f}", 1, 0, "R", fill=True
+        )
+        pdf.cell(
+            sum_widths[3], 7, f"{net_tot_ded:,.0f}", 1, 0, "R", fill=True
+        )
+        pdf.cell(
+            sum_widths[4], 7, f"{net_tot_cred:,.0f}", 1, 0, "R", fill=True
+        )
+        pdf.cell(
+            sum_widths[5], 7, f"{net_tot_plus1:,.0f}", 1, 0, "C", fill=True
+        )
+        pdf.cell(
+            sum_widths[6], 7, f"{net_tot_payable:,.0f}", 1, 0, "R", fill=True
+        )
+        pdf.ln()
 
         pdf_output = bytes(pdf.output())
         st.download_button(
