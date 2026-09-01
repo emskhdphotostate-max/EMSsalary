@@ -1,5 +1,6 @@
 import base64
 import io
+import os
 import sqlite3
 from fpdf import FPDF
 import pandas as pd
@@ -242,28 +243,24 @@ if not st.session_state.authenticated:
     st.markdown("</div>", unsafe_allow_html=True)
 else:
   with st.sidebar:
+    logo_html = ""
+    if os.path.exists("LOGO.png"):
+      with open("LOGO.png", "rb") as f:
+        logo_b64 = base64.b64encode(f.read()).decode()
+        logo_html = f'<img src="data:image/png;base64,{logo_b64}" width="80" style="margin-bottom: 8px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">'
+    else:
+      logo_html = '<h3 style="margin:0;">🎓</h3>'
+
     st.markdown(
-        "<div"
-        " style='display: flex; flex-direction: column; align-items: center;"
-        " justify-content: center; text-align: center; padding-top: 10px;"
-        " width: 100%;'>",
+        f"""
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10px 0; width: 100%;">
+            {logo_html}
+            <h3 style="margin: 6px 0 0 0; font-size: 15px; color: #ffffff; font-weight: 700; letter-spacing: 0.5px; text-align: center;">EXCELLENCE MODEL SCHOOL</h3>
+            <p style="font-size: 11px; color: #d1d5db; margin: 3px 0 0 0; text-align: center;">Enterprise Management ERP</p>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
-    try:
-      st.image("LOGO.png", width=85)
-    except Exception:
-      st.markdown("### 🎓")
-    st.markdown(
-        "<h3 style='margin: 8px 0 0 0; font-size: 15px; color:"
-        " #ffffff; text-align: center;'>EXCELLENCE MODEL SCHOOL</h3>",
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        "<p style='font-size:11px; color:#d1d5db; margin: 2px 0 0 0;"
-        " text-align: center;'>Enterprise Management ERP</p>",
-        unsafe_allow_html=True,
-    )
-    st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("---")
 
     campuses = [
@@ -803,7 +800,7 @@ else:
             f"""
             <div style="border: 2px solid #2C1654; padding: 25px; border-radius: 10px; background-color: #ffffff; color: #000000; max-width: 700px; margin: auto;">
                 <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 5px;">
-                    <img src="data:image/png;base64,{base64.b64encode(open('LOGO.png', 'rb').read()).decode() if __import__('os').path.exists('LOGO.png') else ''}" width="50" style="vertical-align: middle;">
+                    <img src="data:image/png;base64,{base64.b64encode(open('LOGO.png', 'rb').read()).decode() if os.path.exists('LOGO.png') else ''}" width="50" style="vertical-align: middle;">
                     <h3 style="color: #2C1654; margin: 0;">EXCELLENCE MODEL SCHOOL</h3>
                 </div>
                 <p style="text-align: center; font-size: 13px; color: gray; margin-top: 2px;">Campus: {selected_campus} | Salary Slip for {month_filter}</p>
@@ -998,7 +995,7 @@ else:
       total_basic_all = sum([r[2] for r in summary_data])
 
       tot_deductions = 0
-      tot_final = 0  # <--- Fixed syntax error here
+      tot_final = 0
       for r in all_rows:
         b_sal, abs_d, late_d, dim, cred_d = r
         per_day = b_sal / dim if dim > 0 else 0
