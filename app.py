@@ -99,6 +99,43 @@ def init_db():
 
 init_db()
 
+
+# Auto-migrate existing salary records into employees master if master is empty
+def auto_migrate_employees():
+  campuses = [
+      "Kharadar",
+      "Kharadar Extension",
+      "Tower Campus",
+      "Sony Campus",
+      "Park View",
+  ]
+  for camp in campuses:
+    count = run_query(
+        "SELECT COUNT(*) FROM employees WHERE campus = ?;", (camp,)
+    )
+    if count and count[0][0] == 0:
+      # Pull unique employees from salaries table for this campus
+      old_emps = run_query(
+          """
+                SELECT DISTINCT reg_no, name, designation, basic_salary 
+                FROM salaries WHERE campus = ?;
+            """,
+          (camp,),
+      )
+      for emp in old_emps:
+        r_no, name, desig, b_sal = emp
+        if name:
+          execute_non_query(
+              """
+                    INSERT INTO employees (campus, reg_no, name, designation, basic_salary, increment)
+                    VALUES (?, ?, ?, ?, ?, 0);
+                """,
+              (camp, r_no, name, desig, b_sal),
+          )
+
+
+auto_migrate_employees()
+
 # Authentication State Check
 if "authenticated" not in st.session_state:
   st.session_state.authenticated = False
@@ -552,7 +589,7 @@ else:
           data=sum_csv,
           file_name=f"EMS_Consolidated_Summary_{month_filter}.csv",
           mime="text/csv",
-          use_container_width=True,  # 👈 Yahan theek kar diya gaya hai
+          use_container_width=True,
       )
     else:
       st.info(
