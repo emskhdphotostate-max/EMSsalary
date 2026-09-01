@@ -1,6 +1,5 @@
-import os
+import sqlite3
 import pandas as pd
-import psycopg2
 import streamlit as st
 
 # Page Configuration
@@ -25,55 +24,54 @@ st.markdown(
 )
 
 
-# Updated Neon Database Connection using Streamlit Secrets & SSL handling
-@st.cache_resource
+# SQLite Database Connection (Local file storage, zero configuration required)
 def init_connection():
-  db_url = st.secrets["neon"]["connection_string"]
-  # Agar string mein sslmode nahi hai toh automatically add kar dein
-  if "sslmode" not in db_url:
-    if "?" in db_url:
-      db_url += "&sslmode=require"
-    else:
-      db_url += "?sslmode=require"
-  return psycopg2.connect(db_url)
+  conn = sqlite3.connect("school_salaries.db", check_same_thread=False)
+  return conn
 
 
 def run_query(query, params=None):
   conn = init_connection()
-  with conn.cursor() as cur:
-    cur.execute(query, params)
-    try:
-      return cur.fetchall()
-    except Exception:
-      conn.commit()
-      return []
+  cursor = conn.cursor()
+  if params:
+    cursor.execute(query, params)
+  else:
+    cursor.execute(query)
+  try:
+    return cursor.fetchall()
+  except Exception:
+    conn.commit()
+    return []
 
 
 def execute_non_query(query, params=None):
   conn = init_connection()
-  with conn.cursor() as cur:
-    cur.execute(query, params)
-    conn.commit()
+  cursor = conn.cursor()
+  if params:
+    cursor.execute(query, params)
+  else:
+    cursor.execute(query)
+  conn.commit()
 
 
 # Initialize Database Table if not exists
 def init_db():
   query = """
     CREATE TABLE IF NOT EXISTS salaries (
-        id SERIAL PRIMARY KEY,
-        campus VARCHAR(50),
-        reg_no VARCHAR(50),
-        name VARCHAR(100),
-        designation VARCHAR(100),
-        basic_salary NUMERIC DEFAULT 0,
-        absent_days NUMERIC DEFAULT 0,
-        late_days NUMERIC DEFAULT 0,
-        deduction_late NUMERIC DEFAULT 0,
-        days_in_month NUMERIC DEFAULT 30,
-        considered_red_days NUMERIC DEFAULT 0,
-        plus_one NUMERIC DEFAULT 0,
-        reason VARCHAR(255),
-        month_year VARCHAR(50)
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        campus TEXT,
+        reg_no TEXT,
+        name TEXT,
+        designation TEXT,
+        basic_salary REAL DEFAULT 0,
+        absent_days REAL DEFAULT 0,
+        late_days REAL DEFAULT 0,
+        deduction_late REAL DEFAULT 0,
+        days_in_month REAL DEFAULT 30,
+        considered_red_days REAL DEFAULT 0,
+        plus_one REAL DEFAULT 0,
+        reason TEXT,
+        month_year TEXT
     );
     """
   execute_non_query(query)
@@ -136,7 +134,7 @@ else:
     query = """
             SELECT id, reg_no, name, designation, basic_salary, absent_days, late_days, 
                    deduction_late, days_in_month, considered_red_days, plus_one, reason 
-            FROM salaries WHERE campus = %s AND month_year = %s ORDER BY id;
+            FROM salaries WHERE campus = ? AND month_year = ? ORDER BY id;
         """
     rows = run_query(query, (selected_tab, month_filter))
 
@@ -214,7 +212,7 @@ else:
 
       if st.button("💾 Save Changes to Database"):
         delete_query = (
-            "DELETE FROM salaries WHERE campus = %s AND month_year = %s;"
+            "DELETE FROM salaries WHERE campus = ? AND month_year = ?;"
         )
         execute_non_query(delete_query, (selected_tab, month_filter))
 
@@ -222,7 +220,7 @@ else:
           insert_query = """
                         INSERT INTO salaries (campus, reg_no, name, designation, basic_salary, absent_days, 
                                               late_days, deduction_late, days_in_month, considered_red_days, plus_one, reason, month_year)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                     """
           execute_non_query(
               insert_query,
@@ -258,7 +256,7 @@ else:
 
     sum_query = """
             SELECT campus, COUNT(id) as total_staff, SUM(basic_salary) as total_basic 
-            FROM salaries WHERE month_year = %s GROUP BY campus;
+            FROM salaries WHERE month_year = ? GROUP BY campus;
         """
     summary_data = run_query(sum_query, (month_filter,))
 
