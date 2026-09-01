@@ -1063,9 +1063,13 @@ else:
       st.info("No employee records available for this campus yet.")
 
   elif nav_mode == "Salary Slip Generator":
+    logo_data_uri = ""
+    if os.path.exists("LOGO.png"):
+      logo_data_uri = base64.b64encode(open("LOGO.png", "rb").read()).decode()
+
     logo_slip = (
-        f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="65" style="vertical-align: middle; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); margin-bottom: 8px;">'
-        if os.path.exists("LOGO.png")
+        f'<img src="data:image/png;base64,{logo_data_uri}" width="65" style="vertical-align: middle; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); margin-bottom: 8px;">'
+        if logo_data_uri
         else ""
     )
     st.markdown(
@@ -1109,11 +1113,17 @@ else:
         plus_amount = p_one * per_day
         final_pay = b_sal - tot_ded + plus_amount
 
+        logo_img_tag = (
+            f'<img src="data:image/png;base64,{logo_data_uri}" width="50" style="vertical-align: middle;">'
+            if logo_data_uri
+            else ''
+        )
+
         st.markdown(
             f"""
             <div style="border: 2px solid #2C1654; padding: 25px; border-radius: 10px; background-color: #ffffff; color: #000000; max-width: 700px; margin: auto;">
                 <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 5px;">
-                    <img src="data:image/png;base64,{base64.b64encode(open('LOGO.png', 'rb").read()).decode() if os.path.exists('LOGO.png') else ''}" width="50" style="vertical-align: middle;">
+                    {logo_img_tag}
                     <h3 style="color: #2C1654; margin: 0;">EXCELLENCE MODEL SCHOOL</h3>
                 </div>
                 <p style="text-align: center; font-size: 13px; color: gray; margin-top: 2px;">Campus: {selected_campus} | Salary Slip for {month_filter}</p>
