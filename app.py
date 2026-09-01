@@ -335,15 +335,15 @@ else:
         unsafe_allow_html=True,
     )
 
-    # Updated Footer Section with SSKAZAMA
+    # Footer Section with SSKAZAMA on top and Admin Portal below
     st.markdown(
         """
         <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 5px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <div style="background-color: #3b82f6; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px;">MT</div>
                 <div>
-                    <div style="font-size: 13px; font-weight: 600; color: #ffffff;">Muhammad Tahir</div>
-                    <div style="font-size: 10px; color: #9ca3af;">SSKAZAMA</div>
+                    <div style="font-size: 13px; font-weight: 600; color: #ffffff;">SSKAZAMA</div>
+                    <div style="font-size: 10px; color: #9ca3af;">Admin Portal</div>
                 </div>
             </div>
         </div>
