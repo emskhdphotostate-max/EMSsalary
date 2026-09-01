@@ -26,12 +26,21 @@ st.markdown(
     [data-testid="stSidebar"] div {
         color: #ffffff !important;
     }
-    /* Logout Button Styling - Purple Text & White Background */
+    /* 3D Modern Logout Button Style */
     [data-testid="stSidebar"] button {
-        color: #2C1654 !important;
-        background-color: #ffffff !important;
+        color: #ffffff !important;
+        background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;
         font-weight: 700;
-        border-radius: 6px;
+        border-radius: 35px !important;
+        border: 2px solid rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        letter-spacing: 0.8px;
+        transition: all 0.3s ease;
+    }
+    [data-testid="stSidebar"] button:hover {
+        background: linear-gradient(135deg, #4338ca 0%, #2563eb 100%) !important;
+        box-shadow: 0 6px 15px rgba(59, 130, 246, 0.6);
+        border-color: rgba(255, 255, 255, 0.5) !important;
     }
     .main-header {
         font-size: 26px;
@@ -288,7 +297,7 @@ else:
     )
 
     st.markdown("---")
-    if st.button("🚪 Secure Logout", use_container_width=True):
+    if st.button("🚪 LOGOUT", use_container_width=True):
       st.session_state.authenticated = False
       st.rerun()
 
@@ -750,21 +759,22 @@ else:
 
   # 4. SALARY SLIP GENERATOR TAB
   elif nav_mode == "Salary Slip Generator":
-    c_img, c_title = st.columns([0.15, 0.85])
-    with c_img:
-      try:
-        st.image("LOGO.png", width=70)
-      except Exception:
-        st.markdown("### 🎓")
-    with c_title:
-      st.markdown(
-          "<div class='main-header' style='text-align: left; margin: 0;'>EXCELLENCE MODEL SCHOOL</div>",
-          unsafe_allow_html=True,
-      )
-      st.markdown(
-          f"<div class='sub-header' style='text-align: left; margin: 0;'>{selected_campus.upper()} BRANCH — Individual Salary Slip ({month_filter})</div>",
-          unsafe_allow_html=True,
-      )
+    logo_html = ""
+    if os.path.exists("LOGO.png"):
+      with open("LOGO.png", "rb") as f:
+        logo_b64 = base64.b64encode(f.read()).decode()
+        logo_html = f'<img src="data:image/png;base64,{logo_b64}" width="65" style="vertical-align: middle; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); margin-bottom: 8px;">'
+
+    st.markdown(
+        f"""
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; margin-bottom: 25px;">
+            {logo_html}
+            <div style="font-size: 26px; font-weight: 800; color: #2C1654; margin-bottom: 2px;">EXCELLENCE MODEL SCHOOL</div>
+            <div style="font-size: 15px; color: #4B5563; font-weight: 500;">{selected_campus.upper()} BRANCH — Individual Salary Slip ({month_filter})</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     slip_emps = run_query(
         """
