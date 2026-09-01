@@ -191,7 +191,6 @@ else:
       df["Basic Salary"] = pd.to_numeric(df["Basic Salary"]).fillna(0)
       df["Absent Days"] = pd.to_numeric(df["Absent Days"]).fillna(0)
       df["Late Days"] = pd.to_numeric(df["Late Days"]).fillna(0)
-      df["Deduction Late"] = pd.to_numeric(df["Deduction Late"]).fillna(0)
       df["Days in Month"] = pd.to_numeric(df["Days in Month"]).fillna(30)
       df["Considered Red Days"] = pd.to_numeric(
           df["Considered Red Days"]
@@ -206,11 +205,13 @@ else:
           axis=1,
       )
 
-      # Total Unadjusted Absent/Deduction Pool (Absent Days + Deduction Late)
-      # Considered Red Days will waive off from this total deduction pool
+      # AUTOMATIC LATE DEDUCTION RULE: 3 Late Days = 1 Deduction Unit
+      df["Deduction Late"] = df["Late Days"] / 3.0
+
+      # Total Deduction Pool = Absent Days + Late Deduction Units
       df["Total Absent/Late Units"] = df["Absent Days"] + df["Deduction Late"]
 
-      # Actual deductions after considering red days (cannot be less than 0)
+      # Net Deduction Units after subtracting Considered Red Days (cannot be less than 0)
       df["Net Deduction Units"] = df.apply(
           lambda row: max(
               0, row["Total Absent/Late Units"] - row["Considered Red Days"]
@@ -220,9 +221,7 @@ else:
 
       df["Total Deduction Amount"] = df["Net Deduction Units"] * df["Per Day"]
 
-      # Plus 1 Bonus condition: Automatically give Plus 1 if there are no absents and no late deductions,
-      # OR if the user explicitly checked/entered Plus 1.
-      # Here we let user toggle/control "Plus 1" in the grid, but ensure logic matches.
+      # Final Salary Calculation
       df["Final Salary"] = (
           df["Basic Salary"]
           - df["Total Deduction Amount"]
@@ -315,7 +314,9 @@ else:
                   month_filter,
               ),
           )
-        st.success("✅ Records and formulas updated successfully!")
+        st.success(
+            "✅ Records and automatic 3-late=1-absent formulas updated!"
+        )
         st.rerun()
 
     with col_dl:
@@ -384,7 +385,8 @@ else:
       for r in all_rows:
         b_sal, abs_d, late_d, ded_l, dim, cred_d, p_one = r
         per_day = b_sal / dim if dim > 0 else 0
-        total_units = abs_d + ded_l
+        auto_ded_late = late_d / 3.0
+        total_units = abs_d + auto_ded_late
         net_units = max(0, total_units - cred_d)
         total_ded = net_units * per_day
         f_sal = b_sal - total_ded + (p_one * per_day)
