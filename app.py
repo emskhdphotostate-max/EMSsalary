@@ -444,25 +444,32 @@ else:
         r_no, name, desig, b_sal, inc, j_month, status, l_month = emp
         j_idx = get_month_index(j_month)
 
+        # Eligibility check: Joined on or before current month, AND (Active OR Leaving month is after or equal to current month)
+        is_eligible = False
         if j_idx <= current_m_idx:
-          if status == "Active" or (
-              l_month and get_month_index(l_month) >= current_m_idx
-          ):
-            effective_basic = b_sal + inc
-            execute_non_query(
-                """
+          if status == "Active":
+            is_eligible = True
+          elif status == "Left" and l_month:
+            l_idx = get_month_index(l_month)
+            if current_m_idx <= l_idx:
+              is_eligible = True
+
+        if is_eligible:
+          effective_basic = b_sal + inc
+          execute_non_query(
+              """
                         INSERT INTO salaries (campus, reg_no, name, designation, basic_salary, absent_days, late_days, days_in_month, considered_red_days, reason, month_year)
                         VALUES (?, ?, ?, ?, ?, 0, 0, 30, 0, '', ?);
                     """,
-                (
-                    selected_campus,
-                    r_no,
-                    name,
-                    desig,
-                    effective_basic,
-                    month_filter,
-                ),
-            )
+              (
+                  selected_campus,
+                  r_no,
+                  name,
+                  desig,
+                  effective_basic,
+                  month_filter,
+              ),
+          )
 
       existing_rows = run_query(
           """
