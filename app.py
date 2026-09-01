@@ -25,7 +25,7 @@ st.markdown(
     [data-testid="stSidebar"] div {
         color: #ffffff !important;
     }
-    /* Fix Logout Button Styling */
+    /* Fix Logout Button Styling - Purple Text & White Background */
     [data-testid="stSidebar"] button {
         color: #2C1654 !important;
         background-color: #ffffff !important;
@@ -242,10 +242,13 @@ if not st.session_state.authenticated:
         st.error("Invalid Password! Please try again.")
     st.markdown("</div>", unsafe_allow_html=True)
 else:
-  # Sidebar Navigation with Clean Centered Logo & School Name
+  # Sidebar Navigation with Clean Centered Logo & Text (Image 1 Fixed)
   with st.sidebar:
     st.markdown(
-        "<div style='text-align: center; padding-top: 10px;'>",
+        "<div"
+        " style='display: flex; flex-direction: column; align-items: center;"
+        " justify-content: center; text-align: center; padding-top: 10px;"
+        " width: 100%;'>",
         unsafe_allow_html=True,
     )
     try:
@@ -254,12 +257,12 @@ else:
       st.markdown("### 🎓")
     st.markdown(
         "<h3 style='margin: 8px 0 0 0; font-size: 15px; color:"
-        " #ffffff;'>EXCELLENCE MODEL SCHOOL</h3>",
+        " #ffffff; text-align: center;'>EXCELLENCE MODEL SCHOOL</h3>",
         unsafe_allow_html=True,
     )
     st.markdown(
-        "<p style='font-size:11px; color:#d1d5db; margin: 2px 0 0 0;'>Enterprise"
-        " Management ERP</p>",
+        "<p style='font-size:11px; color:#d1d5db; margin: 2px 0 0 0;"
+        " text-align: center;'>Enterprise Management ERP</p>",
         unsafe_allow_html=True,
     )
     st.markdown("</div>", unsafe_allow_html=True)
@@ -690,7 +693,6 @@ else:
           pdf.cell(widths[9], 6, f"{row['Total Final Salary']:,.1f}", 1, 0, "R")  # type: ignore
           pdf.ln()
 
-        # Robust output conversion for modern fpdf2 versions to prevent StreamlitAPIException
         pdf_output = bytes(pdf.output())
 
         st.download_button(
@@ -803,17 +805,24 @@ else:
           " monthly salary sheets first."
       )
 
-  # 4. INDIVIDUAL SALARY SLIP GENERATOR TAB
+  # 4. INDIVIDUAL SALARY SLIP GENERATOR TAB (Image 3 Fixed: Logos Added)
   elif nav_mode == "Salary Slip Generator":
-    st.markdown(
-        "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        f"<div class='sub-header'>{selected_campus.upper()} BRANCH — Individual"
-        f" Salary Slip ({month_filter})</div>",
-        unsafe_allow_html=True,
-    )
+    # Top Section with Logo (First requested position in Image 3)
+    c_img, c_title = st.columns([0.15, 0.85])
+    with c_img:
+      try:
+        st.image("LOGO.png", width=70)
+      except Exception:
+        st.markdown("### 🎓")
+    with c_title:
+      st.markdown(
+          "<div class='main-header' style='text-align: left; margin: 0;'>EXCELLENCE MODEL SCHOOL</div>",
+          unsafe_allow_html=True,
+      )
+      st.markdown(
+          f"<div class='sub-header' style='text-align: left; margin: 0;'>{selected_campus.upper()} BRANCH — Individual Salary Slip ({month_filter})</div>",
+          unsafe_allow_html=True,
+      )
 
     slip_emps = run_query(
         """
@@ -843,11 +852,15 @@ else:
         plus_amount = p_one * per_day
         final_pay = b_sal - tot_ded + plus_amount
 
+        # Salary Slip Box with Logo inside (Second requested position in Image 3)
         st.markdown(
             f"""
             <div style="border: 2px solid #2C1654; padding: 25px; border-radius: 10px; background-color: #ffffff; color: #000000; max-width: 700px; margin: auto;">
-                <h3 style="text-align: center; color: #2C1654; margin-bottom: 0;">EXCELLENCE MODEL SCHOOL</h3>
-                <p style="text-align: center; font-size: 13px; color: gray;">Campus: {selected_campus} | Salary Slip for {month_filter}</p>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 5px;">
+                    <img src="data:image/png;base64,{base64.b64encode(open('LOGO.png', 'rb').read()).decode() if __import__('os').path.exists('LOGO.png') else ''}" width="50" style="vertical-align: middle;">
+                    <h3 style="color: #2C1654; margin: 0;">EXCELLENCE MODEL SCHOOL</h3>
+                </div>
+                <p style="text-align: center; font-size: 13px; color: gray; margin-top: 2px;">Campus: {selected_campus} | Salary Slip for {month_filter}</p>
                 <hr style="border: 1px solid #2C1654;">
                 <table style="width: 100%; font-size: 14px; margin-bottom: 15px;">
                     <tr>
