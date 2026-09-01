@@ -14,12 +14,12 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Professional Enterprise Deep Navy Theme Custom Styling (Matched with Meridian ERP SaaS Reference)
+# Professional Enterprise Deep Navy Theme Custom Styling (Matched with CleanTask Reference Image)
 st.markdown(
     """
     <style>
     [data-testid="stSidebar"] {
-        background-color: #111827;
+        background-color: #0b1329;
         color: #9ca3af;
         border-right: 1px solid rgba(255, 255, 255, 0.08);
     }
@@ -28,33 +28,34 @@ st.markdown(
     [data-testid="stSidebar"] div {
         color: #e5e7eb !important;
     }
-    /* Professional Clean Styling for Radio Navigation Options */
+    /* Clean Styling for Navigation Radio Options */
     [data-testid="stSidebar"] .stRadio {
         margin-top: 5px;
     }
     [data-testid="stSidebar"] .stRadio div[role="radiogroup"] {
-        gap: 8px !important;
+        gap: 6px !important;
     }
     [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label {
-        background-color: rgba(255, 255, 255, 0.03);
-        padding: 10px 14px;
+        background-color: transparent;
+        padding: 9px 12px;
         border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        border: 1px solid transparent;
         transition: all 0.2s ease;
         cursor: pointer;
     }
     [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label:hover {
-        background-color: rgba(255, 255, 255, 0.08);
-        border-color: rgba(255, 255, 255, 0.2);
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
     }
-    /* Active selection indicator highlight */
+    /* Active selection highlight matching the blue button in reference */
     [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label[data-checked="true"] {
-        background-color: rgba(59, 130, 246, 0.15);
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
         border-color: #3b82f6;
+        box-shadow: 0 4px 12px rgba(29, 78, 216, 0.4);
     }
     [data-testid="stSidebar"] button {
         color: #ffffff !important;
-        background: linear-gradient(135deg, #2563eb 100%, #1d4ed8 0%) !important;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
         font-weight: 600;
         border-radius: 8px !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -62,7 +63,7 @@ st.markdown(
         transition: all 0.2s ease;
     }
     [data-testid="stSidebar"] button:hover {
-        background: linear-gradient(135deg, #1d4ed8 100%, #1e40af 0%) !important;
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
         box-shadow: 0 4px 10px rgba(37, 99, 235, 0.5);
     }
     .main-header {
@@ -268,22 +269,28 @@ if not st.session_state.authenticated:
         st.error("Invalid Password! Please try again.")
 else:
   with st.sidebar:
+    # Logo & Brand Header like reference image "CleanTask"
     logo_sidebar = (
-        f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="80" style="margin-bottom: 8px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">'
+        f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="34" style="border-radius: 6px; vertical-align: middle; margin-right: 8px;">'
         if os.path.exists("LOGO.png")
-        else '<h3 style="margin:0;">🎓</h3>'
+        else '<span style="font-size: 22px; vertical-align: middle; margin-right: 8px;">🎓</span>'
     )
     st.markdown(
         f"""
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10px 0; width: 100%;">
+        <div style="display: flex; align-items: center; padding: 4px 0 12px 0;">
             {logo_sidebar}
-            <h3 style="margin: 6px 0 0 0; font-size: 15px; color: #ffffff; font-weight: 700; letter-spacing: 0.5px; text-align: center;">EXCELLENCE MODEL SCHOOL</h3>
-            <p style="font-size: 11px; color: #9ca3af; margin: 3px 0 0 0; text-align: center;">Enterprise Management ERP</p>
+            <span style="font-size: 20px; color: #ffffff; font-weight: 800; letter-spacing: 0.5px;">CleanTask</span>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    st.markdown("---")
+
+    # Search Bar inside Sidebar matching reference
+    st.text_input(
+        "Search", placeholder="Search...", label_visibility="collapsed"
+    )
+    st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+
     selected_campus = st.selectbox(
         "Select Campus",
         [
@@ -294,26 +301,68 @@ else:
             "Park View",
         ],
     )
+
+    # Navigation options mapped with clean icons mimicking the reference layout
     nav_mode = st.radio(
         "Main Navigation",
         [
-            "Monthly Salary Sheet",
-            "Add New Employee",
-            "Staff Directory (Master & Increment)",
-            "Employee Yearly Ledger",
-            "Salary Slip Generator",
-            "Summary",
+            "📊 Monthly Salary Sheet",
+            "➕ Add New Employee",
+            "directory Staff Directory",
+            "📅 Employee Yearly Ledger",
+            "💬 Salary Slip Generator",
+            "📈 Summary",
         ],
+        label_visibility="collapsed",
     )
+
+    # Strip custom icon prefixes to match backend logic seamlessly
+    clean_nav_mode = nav_mode.split(" ", 1)[1] if " " in nav_mode else nav_mode
+
     month_filter = st.selectbox(
         "Select Month", list(MONTH_ORDER.keys()), index=7
     )
-    st.markdown("---")
-    if st.button("🚪 LOGOUT", use_container_width=True):
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Database Storage Widget matching "Used Space" card in reference image
+    st.markdown(
+        """
+        <div style="background-color: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); padding: 14px; border-radius: 12px; margin-bottom: 15px;">
+            <div style="font-size: 13px; font-weight: 700; color: #ffffff; margin-bottom: 4px;">Neon Database</div>
+            <div style="font-size: 11px; color: #9ca3af; line-height: 1.4; margin-bottom: 10px;">Cloud synchronization active for school branches & records.</div>
+            <div style="background-color: rgba(255, 255, 255, 0.1); border-radius: 4px; height: 6px; width: 100%; margin-bottom: 10px; overflow: hidden;">
+                <div style="background-color: #3b82f6; width: 65%; height: 100%;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: #9ca3af;">
+                <span>Active Sync</span>
+                <span style="color: #60a5fa; cursor: pointer;">Upgrade Plan</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # User Profile Section matching the bottom footer of reference image
+    st.markdown(
+        """
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 5px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="background-color: #3b82f6; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px;">MT</div>
+                <div>
+                    <div style="font-size: 13px; font-weight: 600; color: #ffffff;">Muhammad Tahir</div>
+                    <div style="font-size: 10px; color: #9ca3af;">Admin Portal</div>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown("<div style='height: 5px;'></div>", unsafe_allow_html=True)
+    if st.button("🚪 Logout Session", use_container_width=True):
       st.session_state.authenticated = False
       st.rerun()
 
-  if nav_mode == "Add New Employee":
+  if clean_nav_mode == "Add New Employee":
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
@@ -407,7 +456,7 @@ else:
           )
           st.balloons()
 
-  elif nav_mode == "Staff Directory (Master & Increment)":
+  elif clean_nav_mode == "Staff Directory":
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
@@ -532,7 +581,7 @@ else:
       st.success("✅ Staff Master Directory updated successfully!")
       st.rerun()
 
-  elif nav_mode == "Monthly Salary Sheet":
+  elif clean_nav_mode == "Monthly Salary Sheet":
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
@@ -1200,7 +1249,7 @@ else:
             use_container_width=True,
         )
 
-  elif nav_mode == "Employee Yearly Ledger":
+  elif clean_nav_mode == "Employee Yearly Ledger":
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
@@ -1260,7 +1309,7 @@ else:
     else:
       st.info("No employee records available for this campus yet.")
 
-  elif nav_mode == "Salary Slip Generator":
+  elif clean_nav_mode == "Salary Slip Generator":
     logo_data_uri = ""
     if os.path.exists("LOGO.png"):
       logo_data_uri = base64.b64encode(open("LOGO.png", "rb").read()).decode()
@@ -1314,7 +1363,7 @@ else:
         logo_img_tag = (
             f'<img src="data:image/png;base64,{logo_data_uri}" width="50" style="vertical-align: middle;">'
             if logo_data_uri
-            else ''
+            else ""
         )
 
         st.markdown(
@@ -1380,7 +1429,7 @@ else:
     else:
       st.info("No salary records available for this month.")
 
-  elif nav_mode == "Summary":
+  elif clean_nav_mode == "Summary":
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
