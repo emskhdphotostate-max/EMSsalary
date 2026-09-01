@@ -81,21 +81,16 @@ def init_connection():
     )
     st.stop()
 
-  # Clean up quotes, spaces, and handle channel_binding safely
+  # Clean up quotes and spaces
   db_url = db_url.strip().strip('"').strip("'")
 
-  if "channel_binding" in db_url:
-    if "&channel_binding" in db_url:
-      db_url = db_url.split("&channel_binding")[0]
-    elif "?channel_binding" in db_url:
-      base_part = db_url.split("?channel_binding")[0]
-      remainder = db_url.split("?channel_binding")[1]
-      if "&" in remainder:
-        extra_params = "&".join(remainder.split("&")[1:])
-        db_url = f"{base_part}?{extra_params}"
-      else:
-        db_url = base_part
+  # Completely strip channel_binding and its value using regex
+  db_url = re.sub(r"([&?])channel_binding=[^&]*", "", db_url)
+  db_url = db_url.replace("&&", "&").replace("?&", "?")
+  if db_url.endswith("&") or db_url.endswith("?"):
+    db_url = db_url[:-1]
 
+  # Ensure sslmode=require is present correctly
   if "?" not in db_url:
     db_url += "?sslmode=require"
   elif "sslmode=" not in db_url:
