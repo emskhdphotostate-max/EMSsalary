@@ -117,7 +117,7 @@ if not st.session_state.authenticated:
       else:
         st.error("Invalid Password! Please try again.")
 else:
-  # Sidebar Navigation for 5 Campuses and Summary Tab
+  # Sidebar Navigation for Campuses and Summary Tab
   st.sidebar.markdown("### 🏫 EMS Portals", unsafe_allow_html=True)
   campuses = [
       "Kharadar",
@@ -198,7 +198,7 @@ else:
       ).fillna(0)
       df["Plus 1"] = pd.to_numeric(df["Plus 1"]).fillna(0)
 
-      # Automatic Calculations with Corrected Deduction Logic
+      # Per Day Calculation
       df["Per Day"] = df.apply(
           lambda row: row["Basic Salary"] / row["Days in Month"]
           if row["Days in Month"] > 0
@@ -206,19 +206,26 @@ else:
           axis=1,
       )
 
-      # Jo absents consider ho gayeen unki deduction nahi karni
-      df["Actual Absent for Ded"] = df.apply(
-          lambda row: max(0, row["Absent Days"] - row["Considered Red Days"]),
+      # Total Unadjusted Absent/Deduction Pool (Absent Days + Deduction Late)
+      # Considered Red Days will waive off from this total deduction pool
+      df["Total Absent/Late Units"] = df["Absent Days"] + df["Deduction Late"]
+
+      # Actual deductions after considering red days (cannot be less than 0)
+      df["Net Deduction Units"] = df.apply(
+          lambda row: max(
+              0, row["Total Absent/Late Units"] - row["Considered Red Days"]
+          ),
           axis=1,
       )
-      df["Ded for Absent"] = df["Actual Absent for Ded"] * df["Per Day"]
-      df["Total Deduction"] = df["Ded for Absent"] + df["Deduction Late"]
-      df["Considered Red Amount"] = df["Considered Red Days"] * df["Per Day"]
 
+      df["Total Deduction Amount"] = df["Net Deduction Units"] * df["Per Day"]
+
+      # Plus 1 Bonus condition: Automatically give Plus 1 if there are no absents and no late deductions,
+      # OR if the user explicitly checked/entered Plus 1.
+      # Here we let user toggle/control "Plus 1" in the grid, but ensure logic matches.
       df["Final Salary"] = (
           df["Basic Salary"]
-          - df["Total Deduction"]
-          + df["Considered Red Amount"]
+          - df["Total Deduction Amount"]
           + (df["Plus 1"] * df["Per Day"])
       )
 
@@ -229,14 +236,12 @@ else:
               "Designation",
               "Basic Salary",
               "Absent Days",
-              "Ded for Absent",
               "Late Days",
               "Deduction Late",
               "Days in Month",
               "Per Day",
-              "Total Deduction",
               "Considered Red Days",
-              "Considered Red Amount",
+              "Total Deduction Amount",
               "Plus 1",
               "Final Salary",
               "Reason of Pending",
@@ -310,7 +315,7 @@ else:
                   month_filter,
               ),
           )
-        st.success("✅ Records and automatic formulas updated successfully!")
+        st.success("✅ Records and formulas updated successfully!")
         st.rerun()
 
     with col_dl:
@@ -336,7 +341,7 @@ else:
         )
       with m3:
         st.metric(
-            "Total Deductions", f"Rs. {df['Total Deduction'].sum():,.2f}"
+            "Total Deductions", f"Rs. {df['Total Deduction Amount'].sum():,.2f}"
         )
       with m4:
         st.metric("Total Final Payout", f"Rs. {df['Final Salary'].sum():,.2f}")
@@ -379,11 +384,10 @@ else:
       for r in all_rows:
         b_sal, abs_d, late_d, ded_l, dim, cred_d, p_one = r
         per_day = b_sal / dim if dim > 0 else 0
-        actual_abs = max(0, abs_d - cred_d)
-        ded_abs = actual_abs * per_day
-        total_ded = ded_abs + ded_l
-        cred_amt = cred_d * per_day
-        f_sal = b_sal - total_ded + cred_amt + (p_one * per_day)
+        total_units = abs_d + ded_l
+        net_units = max(0, total_units - cred_d)
+        total_ded = net_units * per_day
+        f_sal = b_sal - total_ded + (p_one * per_day)
         tot_deductions += total_ded
         tot_final += f_sal
 
