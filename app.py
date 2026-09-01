@@ -63,7 +63,7 @@ def execute_non_query(query, params=None):
   conn.commit()
 
 
-# Initialize Database Tables (Employees Master + Monthly Salaries)
+# Initialize Database Tables (Employees Master with Joining/Leaving tracking + Monthly Salaries)
 def init_db():
   # Master Employees Table
   execute_non_query("""
@@ -74,7 +74,10 @@ def init_db():
             name TEXT,
             designation TEXT,
             basic_salary REAL DEFAULT 0,
-            increment REAL DEFAULT 0
+            increment REAL DEFAULT 0,
+            joining_month TEXT DEFAULT 'July 2026',
+            status TEXT DEFAULT 'Active',
+            leaving_month TEXT DEFAULT ''
         );
     """)
 
@@ -99,6 +102,20 @@ def init_db():
 
 init_db()
 
+# Month mapping for chronological filtering
+MONTH_ORDER = {
+    "July 2026": 1,
+    "August 2026": 2,
+    "September 2026": 3,
+    "October 2026": 4,
+    "November 2026": 5,
+    "December 2026": 6,
+}
+
+
+def get_month_index(m_str):
+  return MONTH_ORDER.get(m_str, 1)
+
 
 # Auto-migrate existing salary records into employees master if master is empty
 def auto_migrate_employees():
@@ -114,7 +131,6 @@ def auto_migrate_employees():
         "SELECT COUNT(*) FROM employees WHERE campus = ?;", (camp,)
     )
     if count and count[0][0] == 0:
-      # Pull unique employees from salaries table for this campus
       old_emps = run_query(
           """
                 SELECT DISTINCT reg_no, name, designation, basic_salary 
@@ -127,8 +143,8 @@ def auto_migrate_employees():
         if name:
           execute_non_query(
               """
-                    INSERT INTO employees (campus, reg_no, name, designation, basic_salary, increment)
-                    VALUES (?, ?, ?, ?, ?, 0);
+                    INSERT INTO employees (campus, reg_no, name, designation, basic_salary, increment, joining_month, status, leaving_month)
+                    VALUES (?, ?, ?, ?, ?, 0, 'July 2026', 'Active', '');
                 """,
               (camp, r_no, name, desig, b_sal),
           )
@@ -182,15 +198,7 @@ else:
   )
 
   month_filter = st.sidebar.selectbox(
-      "Select Month",
-      [
-          "July 2026",
-          "August 2026",
-          "September 2026",
-          "October 2026",
-          "November 2026",
-          "December 2026",
-      ],
+      "Select Month", list(MONTH_ORDER.keys())
   )
 
   st.sidebar.markdown("---")
@@ -211,14 +219,17 @@ else:
     )
 
     st.info(
-        "💡 Yahan aap naye employees add kar sakte hain, yearly increments"
-        " update kar sakte hain, ya jo staff chodh gaya hai usay remove kar"
-        " sakte hain."
+        "💡 Manage staff master records here. You can add new employees, set"
+        " their joining month, apply yearly increments, or mark status as"
+        " 'Left' for departing staff without breaking historical past salary"
+        " records."
     )
 
     emp_rows = run_query(
-        "SELECT id, reg_no, name, designation, basic_salary, increment FROM"
-        " employees WHERE campus = ? ORDER BY id;",
+        """
+            SELECT id, reg_no, name, designation, basic_salary, increment, joining_month, status, leaving_month 
+            FROM employees WHERE campus = ? ORDER BY id;
+        """,
         (selected_campus,),
     )
 
@@ -232,6 +243,9 @@ else:
               "Designation",
               "Basic Salary",
               "Yearly Increment",
+              "Joining Month",
+              "Status",
+              "Leaving Month",
           ],
       )
     else:
@@ -243,6 +257,9 @@ else:
               "Designation",
               "Basic Salary",
               "Yearly Increment",
+              "Joining Month",
+              "Status",
+              "Leaving Month",
           ]
       )
 
@@ -251,7 +268,20 @@ else:
         num_rows="dynamic",
         key=f"emp_master_{selected_campus}",
         column_config={
-            "ID": None  # Hide internal ID column
+            "ID": None,
+            "JoiningMonth": st.column_config.SelectboxColumn(
+                "Joining Month",
+                options=list(MONTH_ORDER.keys()),
+                required=True,
+            ),
+            "Status": st.column_config.SelectboxColumn(
+                "Status", options=["Active", "Left"], required=True
+            ),
+            "LeavingMonth": st.column_config.SelectboxColumn(
+                "Leaving Month",
+                options=[""] + list(MONTH_ORDER.keys()),
+                required=False,
+            ),
         },
     )
 
@@ -264,8 +294,8 @@ else:
           continue
         execute_non_query(
             """
-                    INSERT INTO employees (campus, reg_no, name, designation, basic_salary, increment)
-                    VALUES (?, ?, ?, ?, ?, ?);
+                    INSERT INTO employees (campus, reg_no, name, designation, basic_salary, increment, joining_month, status, leaving_month)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """,
             (
                 selected_campus,
@@ -278,11 +308,18 @@ else:
                 float(row["Yearly Increment"])
                 if pd.notna(row["Yearly Increment"])
                 else 0,
+                str(row["Joining Month"])
+                if pd.notna(row["Joining Month"])
+                else "July 2026",
+                str(row["Status"]) if pd.notna(row["Status"]) else "Active",
+                str(row["Leaving Month"])
+                if pd.notna(row["Leaving Month"])
+                else "",
             ),
         )
       st.success(
-          "✅ Staff Master Directory updated successfully! Increments and"
-          " removals saved."
+          "✅ Staff Master Directory updated successfully! Historical records"
+          " remain fully protected."
       )
       st.rerun()
 
@@ -303,35 +340,55 @@ else:
         unsafe_allow_html=True,
     )
 
-    # Check if monthly records exist; if not, pull active employees from Master Directory
+    current_m_idx = get_month_index(month_filter)
+
+    # Check if monthly records exist
     existing_rows = run_query(
         """
             SELECT id, reg_no, name, designation, basic_salary, absent_days, 
                    late_days, days_in_month, considered_red_days, reason 
-            FROM salaries WHERE campus = ? AND month_year = ? ORDER BY id;
+            FROM salaries WHERE campus = ? and month_year = ? ORDER BY id;
         """,
         (selected_campus, month_filter),
     )
 
     if not existing_rows:
-      # Pull from master employees and apply increments to basic salary
+      # Filter master employees eligible for this month:
+      # 1. Joining month index <= current month index
+      # 2. Either Active OR (Left but leaving month index >= current month index)
       master_emps = run_query(
           """
-                SELECT reg_no, name, designation, basic_salary, increment 
+                SELECT reg_no, name, designation, basic_salary, increment, joining_month, status, leaving_month 
                 FROM employees WHERE campus = ?;
             """,
           (selected_campus,),
       )
+
       for emp in master_emps:
-        r_no, name, desig, b_sal, inc = emp
-        effective_basic = b_sal + inc  # Basic + Yearly Increment
-        execute_non_query(
-            """
-                INSERT INTO salaries (campus, reg_no, name, designation, basic_salary, absent_days, late_days, days_in_month, considered_red_days, reason, month_year)
-                VALUES (?, ?, ?, ?, ?, 0, 0, 30, 0, '', ?);
-            """,
-            (selected_campus, r_no, name, desig, effective_basic, month_filter),
-        )
+        r_no, name, desig, b_sal, inc, j_month, status, l_month = emp
+        j_idx = get_month_index(j_month)
+
+        # Check eligibility for current month filter
+        if j_idx <= current_m_idx:
+          if status == "Active" or (
+              l_month and get_month_index(l_month) >= current_m_idx
+          ):
+            effective_basic = b_sal + inc  # Basic + Yearly Increment
+            execute_non_query(
+                """
+                        INSERT INTO salaries (campus, reg_no, name, designation, basic_salary, absent_days, late_days, days_in_month, considered_red_days, reason, month_year)
+                        VALUES (?, ?, ?, ?, ?, 0, 0, 30, 0, '', ?);
+                    """,
+                (
+                    selected_campus,
+                    r_no,
+                    name,
+                    desig,
+                    effective_basic,
+                    month_filter,
+                ),
+            )
+
       existing_rows = run_query(
           """
             SELECT id, reg_no, name, designation, basic_salary, absent_days, 
