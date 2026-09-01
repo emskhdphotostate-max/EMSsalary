@@ -71,7 +71,7 @@ st.markdown(
 )
 
 
-# Neon Database (PostgreSQL) Connection with SSL fix
+# Neon Database (PostgreSQL) Connection with Bulletproof URL Parsing
 def init_connection():
   db_url = st.secrets.get("DATABASE_URL")
   if not db_url:
@@ -80,11 +80,27 @@ def init_connection():
         " secrets in Streamlit Cloud."
     )
     st.stop()
-  # channel_binding parameter remove kar rahe hain taake psycopg2 error na de
+
+  # Clean up quotes, spaces, and handle channel_binding safely
+  db_url = db_url.strip().strip('"').strip("'")
+
   if "channel_binding" in db_url:
-    db_url = db_url.split("&channel_binding")[0]
+    if "&channel_binding" in db_url:
+      db_url = db_url.split("&channel_binding")[0]
+    elif "?channel_binding" in db_url:
+      base_part = db_url.split("?channel_binding")[0]
+      remainder = db_url.split("?channel_binding")[1]
+      if "&" in remainder:
+        extra_params = "&".join(remainder.split("&")[1:])
+        db_url = f"{base_part}?{extra_params}"
+      else:
+        db_url = base_part
+
   if "?" not in db_url:
     db_url += "?sslmode=require"
+  elif "sslmode=" not in db_url:
+    db_url += "&sslmode=require"
+
   return psycopg2.connect(db_url)
 
 
