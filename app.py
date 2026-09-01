@@ -751,7 +751,7 @@ else:
     else:
       st.info("No employee records available for this campus yet.")
 
-  # 4. SALARY SLIP GENERATOR TAB (Updated with Considered Days Amount)
+  # 4. SALARY SLIP GENERATOR TAB (Updated with Absent & Considered Amounts)
   elif nav_mode == "Salary Slip Generator":
     c_img, c_title = st.columns([0.15, 0.85])
     with c_img:
@@ -790,6 +790,7 @@ else:
         ]
         per_day = b_sal / dim if dim > 0 else 0
         cred_amount = cred_d * per_day  # Considered days monetary value
+        absent_gross_amount = abs_d * per_day  # Gross absent deduction value
         auto_ded_late = late_d / 3.0
         tot_units = abs_d + auto_ded_late
         net_units = max(0, tot_units - cred_d)
@@ -798,7 +799,7 @@ else:
         plus_amount = p_one * per_day
         final_pay = b_sal - tot_ded + plus_amount
 
-        # Salary Slip Box (Considered Days & its Amount shown right below Basic Salary)
+        # Salary Slip Box (Absent Days Gross Amount shown on the right side)
         st.markdown(
             f"""
             <div style="border: 2px solid #2C1654; padding: 25px; border-radius: 10px; background-color: #ffffff; color: #000000; max-width: 700px; margin: auto;">
@@ -829,7 +830,7 @@ else:
                         <td style="padding: 6px;">Basic Salary</td>
                         <td style="padding: 6px; text-align: right;">{b_sal:,.2f}</td>
                         <td style="padding: 6px;">Absent Days ({abs_d})</td>
-                        <td style="padding: 6px; text-align: right;">-</td>
+                        <td style="padding: 6px; text-align: right; color: #b91c1c;">- {absent_gross_amount:,.2f}</td>
                     </tr>
                     <tr>
                         <td style="padding: 6px; color: #1f2937; font-size: 13px;"><b>Considered Days:</b> {cred_d}</td>
@@ -841,7 +842,7 @@ else:
                         <td style="padding: 6px;">Punctuality Bonus (+1)</td>
                         <td style="padding: 6px; text-align: right;">{plus_amount:,.2f}</td>
                         <td style="padding: 6px;">Total Deductions</td>
-                        <td style="padding: 6px; text-align: right; color: red;">{tot_ded:,.2f}</td>
+                        <td style="padding: 6px; text-align: right; color: red; font-weight: bold;">{tot_ded:,.2f}</td>
                     </tr>
                     <tr style="background-color: #f3f4f6; font-weight: bold;">
                         <td style="padding: 8px;">Gross Total</td>
@@ -897,6 +898,16 @@ else:
         slip_pdf.cell(
             90,
             6,
+            f"Absent Days ({abs_d}) - Gross Deduction",
+            1,
+            0,
+            "L",
+        )
+        slip_pdf.cell(100, 6, f"-{absent_gross_amount:,.2f}", 1, 1, "R")
+
+        slip_pdf.cell(
+            90,
+            6,
             f"Considered Days (Saved/Waived): {cred_d}",
             1,
             0,
@@ -907,12 +918,12 @@ else:
         slip_pdf.cell(
             90,
             6,
-            f"Attendance Deductions (Absent: {abs_d}, Late: {late_d})",
+            f"Late Days ({late_d} / 3)",
             1,
             0,
             "L",
         )
-        slip_pdf.cell(100, 6, f"-{tot_ded:,.2f}", 1, 1, "R")
+        slip_pdf.cell(100, 6, "-0.00", 1, 1, "R")
 
         slip_pdf.cell(
             90,
@@ -925,6 +936,9 @@ else:
         slip_pdf.cell(100, 6, f"+{plus_amount:,.2f}", 1, 1, "R")
 
         slip_pdf.set_font("Arial", "B", 10)
+        slip_pdf.cell(90, 8, f"Total Deductions (Net)", 1, 0, "L")
+        slip_pdf.cell(100, 8, f"-{tot_ded:,.2f}", 1, 1, "R")
+
         slip_pdf.cell(90, 8, "Net Final Payout", 1, 0, "L")
         slip_pdf.cell(100, 8, f"Rs. {final_pay:,.2f}", 1, 1, "R")
         slip_pdf.ln(10)
@@ -986,7 +1000,7 @@ else:
       total_basic_all = sum([r[2] for r in summary_data])
 
       tot_deductions = 0
-      tot_final = 0
+      tot_final =, 0
       for r in all_rows:
         b_sal, abs_d, late_d, dim, cred_d = r
         per_day = b_sal / dim if dim > 0 else 0
