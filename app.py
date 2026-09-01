@@ -25,10 +25,16 @@ st.markdown(
 )
 
 
-# Neon Database Connection using Streamlit Secrets
+# Updated Neon Database Connection using Streamlit Secrets & SSL handling
 @st.cache_resource
 def init_connection():
   db_url = st.secrets["neon"]["connection_string"]
+  # Agar string mein sslmode nahi hai toh automatically add kar dein
+  if "sslmode" not in db_url:
+    if "?" in db_url:
+      db_url += "&sslmode=require"
+    else:
+      db_url += "?sslmode=require"
   return psycopg2.connect(db_url)
 
 
