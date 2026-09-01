@@ -14,52 +14,61 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Professional Deep Purple SaaS / ERP Theme Custom Styling with Spaced Navigation
+# Professional Enterprise Deep Navy Theme Custom Styling (Matched with Meridian ERP SaaS Reference)
 st.markdown(
     """
     <style>
     [data-testid="stSidebar"] {
-        background-color: #2C1654;
-        color: #ffffff;
+        background-color: #111827;
+        color: #9ca3af;
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
     }
     [data-testid="stSidebar"] .stSelectbox label, 
     [data-testid="stSidebar"] .stRadio label, 
     [data-testid="stSidebar"] div {
-        color: #ffffff !important;
+        color: #e5e7eb !important;
     }
-    /* Professional Spacing for Radio Navigation Options */
+    /* Professional Clean Styling for Radio Navigation Options */
+    [data-testid="stSidebar"] .stRadio {
+        margin-top: 5px;
+    }
+    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] {
+        gap: 8px !important;
+    }
     [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label {
-        background-color: rgba(255, 255, 255, 0.04);
+        background-color: rgba(255, 255, 255, 0.03);
         padding: 10px 14px;
         border-radius: 8px;
-        margin-bottom: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        transition: all 0.2s ease;
         cursor: pointer;
     }
     [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label:hover {
-        background-color: rgba(255, 255, 255, 0.12);
-        border-color: rgba(255, 255, 255, 0.3);
+        background-color: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+    /* Active selection indicator highlight */
+    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label[data-checked="true"] {
+        background-color: rgba(59, 130, 246, 0.15);
+        border-color: #3b82f6;
     }
     [data-testid="stSidebar"] button {
         color: #ffffff !important;
-        background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;
-        font-weight: 700;
-        border-radius: 35px !important;
-        border: 2px solid rgba(255, 255, 255, 0.2) !important;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-        letter-spacing: 0.8px;
-        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #2563eb 100%, #1d4ed8 0%) !important;
+        font-weight: 600;
+        border-radius: 8px !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+        transition: all 0.2s ease;
     }
     [data-testid="stSidebar"] button:hover {
-        background: linear-gradient(135deg, #4338ca 0%, #2563eb 100%) !important;
-        box-shadow: 0 6px 15px rgba(59, 130, 246, 0.6);
-        border-color: rgba(255, 255, 255, 0.5) !important;
+        background: linear-gradient(135deg, #1d4ed8 100%, #1e40af 0%) !important;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.5);
     }
     .main-header {
         font-size: 26px;
         font-weight: 800;
-        color: #2C1654;
+        color: #111827;
         text-align: center;
         margin-bottom: 2px;
     }
@@ -73,10 +82,10 @@ st.markdown(
     .section-title {
         font-size: 18px;
         font-weight: 700;
-        color: #2C1654;
+        color: #111827;
         margin-top: 25px;
         margin-bottom: 10px;
-        border-bottom: 2px solid #2C1654;
+        border-bottom: 2px solid #111827;
         padding-bottom: 4px;
     }
     </style>
@@ -230,7 +239,7 @@ if not st.session_state.authenticated:
       f"""
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; margin-top: 40px; margin-bottom: 20px;">
             {logo_html}
-            <h1 style="color: #2C1654; margin: 5px 0 0 0; font-weight: 800; font-size: 32px;">EXCELLENCE MODEL SCHOOL</h1>
+            <h1 style="color: #111827; margin: 5px 0 0 0; font-weight: 800; font-size: 32px;">EXCELLENCE MODEL SCHOOL</h1>
             <p style="color: #4B5563; font-weight: 600; font-size: 16px; margin-top: 5px;">Salary Management ERP Portal</p>
         </div>
         """,
@@ -241,8 +250,8 @@ if not st.session_state.authenticated:
   with col2:
     st.markdown(
         """
-        <div style="background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 6px 20px rgba(44,22,84,0.12); border: 1px solid #e5e7eb;">
-            <h3 style="color: #2C1654; text-align: center; margin-bottom: 20px; font-size: 20px; font-weight: 700;">🔒 Secure System Login</h3>
+        <div style="background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 6px 20px rgba(17,24,39,0.08); border: 1px solid #e5e7eb;">
+            <h3 style="color: #111827; text-align: center; margin-bottom: 20px; font-size: 20px; font-weight: 700;">🔒 Secure System Login</h3>
         </div>
         """,
         unsafe_allow_html=True,
@@ -269,7 +278,7 @@ else:
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10px 0; width: 100%;">
             {logo_sidebar}
             <h3 style="margin: 6px 0 0 0; font-size: 15px; color: #ffffff; font-weight: 700; letter-spacing: 0.5px; text-align: center;">EXCELLENCE MODEL SCHOOL</h3>
-            <p style="font-size: 11px; color: #d1d5db; margin: 3px 0 0 0; text-align: center;">Enterprise Management ERP</p>
+            <p style="font-size: 11px; color: #9ca3af; margin: 3px 0 0 0; text-align: center;">Enterprise Management ERP</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -772,7 +781,7 @@ else:
         sub_final = edited_cat_df["Total Final Salary"].sum()
         st.markdown(
             f"""
-            <div style="background-color: #f3f4f6; padding: 10px 15px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; display: flex; justify-content: space-between; border-left: 5px solid #2C1654;">
+            <div style="background-color: #f3f4f6; padding: 10px 15px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; display: flex; justify-content: space-between; border-left: 5px solid #111827;">
                 <span>Total {cat}:</span>
                 <span>Basic: Rs. {sub_basic:,.0f} | Deductions: Rs. {sub_ded:,.1f} | <span style="color: green;">Final Payout: Rs. {sub_final:,.0f}</span></span>
             </div>
@@ -790,7 +799,7 @@ else:
       grand_final = all_edited_combined["Total Final Salary"].sum()
       st.markdown(
           f"""
-          <div style="background: linear-gradient(135deg, #2C1654 0%, #4338ca 100%); color: white; padding: 15px 20px; border-radius: 8px; font-weight: bold; font-size: 16px; margin-top: 15px; margin-bottom: 25px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+          <div style="background: linear-gradient(135deg, #111827 0%, #1f2937 100%); color: white; padding: 15px 20px; border-radius: 8px; font-weight: bold; font-size: 16px; margin-top: 15px; margin-bottom: 25px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
               🏆 GRAND TOTAL ({selected_campus.upper()} BRANCH) — Basic: Rs. {grand_basic:,.0f} | Deductions: Rs. {grand_ded:,.1f} | Final Payout: Rs. {grand_final:,.0f}
           </div>
           """,
@@ -863,7 +872,7 @@ else:
           pdf.image("LOGO.png", x=12, y=10, w=16)
 
         pdf.set_font("Arial", "B", 16)
-        pdf.set_text_color(44, 22, 84)
+        pdf.set_text_color(17, 24, 39)
         pdf.cell(0, 8, "EXCELLENCE MODEL SCHOOL", 0, 1, "C")
         pdf.set_font("Arial", "B", 11)
         pdf.set_text_color(75, 85, 99)
@@ -886,7 +895,7 @@ else:
             "C",
         )
         pdf.ln(4)
-        pdf.set_draw_color(44, 22, 84)
+        pdf.set_draw_color(17, 24, 39)
         pdf.set_line_width(0.6)
         pdf.line(10, pdf.get_y(), 287, pdf.get_y())
         pdf.ln(6)
@@ -903,11 +912,11 @@ else:
             continue
 
           pdf.set_font("Arial", "B", 12)
-          pdf.set_text_color(44, 22, 84)
+          pdf.set_text_color(17, 24, 39)
           pdf.cell(0, 8, f"{cat}", 0, 1, "L")
 
           pdf.set_font("Arial", "B", 8)
-          pdf.set_fill_color(44, 22, 84)
+          pdf.set_fill_color(17, 24, 39)
           pdf.set_text_color(255, 255, 255)
 
           cols = [
@@ -1040,7 +1049,7 @@ else:
           pdf.ln(8)
 
         pdf.set_font("Arial", "B", 10)
-        pdf.set_fill_color(44, 22, 84)
+        pdf.set_fill_color(17, 24, 39)
         pdf.set_text_color(255, 255, 255)
         grand_label = (
             f"GRAND TOTAL ({selected_campus.upper()} BRANCH) -- Basic: Rs."
@@ -1051,7 +1060,7 @@ else:
         pdf.ln(10)
 
         pdf.set_font("Arial", "B", 13)
-        pdf.set_text_color(44, 22, 84)
+        pdf.set_text_color(17, 24, 39)
         pdf.cell(
             0,
             8,
@@ -1265,7 +1274,7 @@ else:
         f"""
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; margin-bottom: 25px;">
             {logo_slip}
-            <div style="font-size: 26px; font-weight: 800; color: #2C1654; margin-bottom: 2px;">EXCELLENCE MODEL SCHOOL</div>
+            <div style="font-size: 26px; font-weight: 800; color: #111827; margin-bottom: 2px;">EXCELLENCE MODEL SCHOOL</div>
             <div style="font-size: 15px; color: #4B5563; font-weight: 500;">{selected_campus.upper()} BRANCH — Individual Salary Slip ({month_filter})</div>
         </div>
         """,
@@ -1310,13 +1319,13 @@ else:
 
         st.markdown(
             f"""
-            <div style="border: 2px solid #2C1654; padding: 25px; border-radius: 10px; background-color: #ffffff; color: #000000; max-width: 700px; margin: auto;">
+            <div style="border: 2px solid #111827; padding: 25px; border-radius: 10px; background-color: #ffffff; color: #000000; max-width: 700px; margin: auto;">
                 <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 5px;">
                     {logo_img_tag}
-                    <h3 style="color: #2C1654; margin: 0;">EXCELLENCE MODEL SCHOOL</h3>
+                    <h3 style="color: #111827; margin: 0;">EXCELLENCE MODEL SCHOOL</h3>
                 </div>
                 <p style="text-align: center; font-size: 13px; color: gray; margin-top: 2px;">Campus: {selected_campus} | Salary Slip for {month_filter}</p>
-                <hr style="border: 1px solid #2C1654;">
+                <hr style="border: 1px solid #111827;">
                 <table style="width: 100%; font-size: 14px; margin-bottom: 15px;">
                     <tr>
                         <td><b>Employee Name:</b> {name}</td>
@@ -1328,7 +1337,7 @@ else:
                     </tr>
                 </table>
                 <table style="width: 100%; border-collapse: collapse; font-size: 14px;" border="1">
-                    <tr style="background-color: #2C1654; color: white;">
+                    <tr style="background-color: #111827; color: white;">
                         <th style="padding: 6px; text-align: left;">Earnings / Particulars</th>
                         <th style="padding: 6px; text-align: right;">Amount (Rs.)</th>
                         <th style="padding: 6px; text-align: left;">Deductions / Details</th>
