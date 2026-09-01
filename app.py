@@ -418,6 +418,27 @@ else:
                   new_status,
               ),
           )
+
+          # Also add to salaries table if eligible for current month
+          j_idx = get_month_index(new_joining_month)
+          curr_idx = get_month_index(month_filter)
+          if j_idx <= curr_idx and new_status == "Active":
+            execute_non_query(
+                """
+                        INSERT INTO salaries (campus, reg_no, name, designation, staff_category, basic_salary, absent_days, late_days, days_in_month, considered_red_days, reason, month_year)
+                        VALUES (?, ?, ?, ?, ?, ?, 0, 0, 30, 0, '', ?);
+                    """,
+                (
+                    new_campus,
+                    new_reg_no,
+                    new_name,
+                    new_designation,
+                    new_staff_category,
+                    new_basic_salary,
+                    month_filter,
+                ),
+            )
+
           st.success(
               f"✅ Successfully registered {new_name} ({new_designation} -"
               f" {new_staff_category}) with ID {new_reg_no} for"
@@ -565,6 +586,79 @@ else:
 
     current_m_idx = get_month_index(month_filter)
 
+    # Automatically sync/refresh salaries table with master employees based on joining month & status
+    master_emps = run_query(
+        """
+            SELECT reg_no, name, designation, staff_category, basic_salary, increment, joining_month, status, leaving_month 
+            FROM employees WHERE campus = ?;
+        """,
+        (selected_campus,),
+    )
+
+    for emp in master_emps:
+      r_no, name, desig, s_cat, b_sal, inc, j_month, status, l_month = emp
+      j_idx = get_month_index(j_month)
+
+      is_eligible = False
+      if j_idx <= current_m_idx:
+        if status == "Active":
+          is_eligible = True
+        elif status == "Left" and l_month:
+          l_idx = get_month_index(l_month)
+          if current_m_idx <= l_idx:
+            is_eligible = True
+
+      # Check if already in salaries for this month
+      existing_entry = run_query(
+          """
+                SELECT id FROM salaries WHERE campus = ? AND month_year = ? AND reg_no = ?;
+            """,
+          (selected_campus, month_filter, r_no),
+      )
+
+      effective_basic = b_sal + inc
+      if is_eligible and not existing_entry:
+        execute_non_query(
+            """
+                    INSERT INTO salaries (campus, reg_no, name, designation, staff_category, basic_salary, absent_days, late_days, days_in_month, considered_red_days, reason, month_year)
+                    VALUES (?, ?, ?, ?, ?, ?, 0, 0, 30, 0, '', ?);
+                """,
+            (
+                selected_campus,
+                r_no,
+                name,
+                desig,
+                s_cat if s_cat else "Teaching Staff",
+                effective_basic,
+                month_filter,
+            ),
+        )
+      elif not is_eligible and existing_entry:
+        # Remove if no longer eligible (e.g. joined in later month)
+        execute_non_query(
+            """
+                    DELETE FROM salaries WHERE campus = ? AND month_year = ? AND reg_no = ?;
+                """,
+            (selected_campus, month_filter, r_no),
+        )
+      elif is_eligible and existing_entry:
+        # Update category/designation/basic in case it was changed in Master Directory
+        execute_non_query(
+            """
+                    UPDATE salaries SET staff_category = ?, designation = ?, name = ?, basic_salary = ? 
+                    WHERE campus = ? AND month_year = ? AND reg_no = ?;
+                """,
+            (
+                s_cat if s_cat else "Teaching Staff",
+                desig,
+                name,
+                effective_basic,
+                selected_campus,
+                month_filter,
+                r_no,
+            ),
+        )
+
     existing_rows = run_query(
         """
             SELECT id, reg_no, name, designation, staff_category, basic_salary, absent_days, 
@@ -573,55 +667,6 @@ else:
         """,
         (selected_campus, month_filter),
     )
-
-    if not existing_rows:
-      master_emps = run_query(
-          """
-                SELECT reg_no, name, designation, staff_category, basic_salary, increment, joining_month, status, leaving_month 
-                FROM employees WHERE campus = ?;
-            """,
-          (selected_campus,),
-      )
-
-      for emp in master_emps:
-        r_no, name, desig, s_cat, b_sal, inc, j_month, status, l_month = emp
-        j_idx = get_month_index(j_month)
-
-        is_eligible = False
-        if j_idx <= current_m_idx:
-          if status == "Active":
-            is_eligible = True
-          elif status == "Left" and l_month:
-            l_idx = get_month_index(l_month)
-            if current_m_idx <= l_idx:
-              is_eligible = True
-
-        if is_eligible:
-          effective_basic = b_sal + inc
-          execute_non_query(
-              """
-                        INSERT INTO salaries (campus, reg_no, name, designation, staff_category, basic_salary, absent_days, late_days, days_in_month, considered_red_days, reason, month_year)
-                        VALUES (?, ?, ?, ?, ?, ?, 0, 0, 30, 0, '', ?);
-                    """,
-              (
-                  selected_campus,
-                  r_no,
-                  name,
-                  desig,
-                  s_cat if s_cat else "Teaching Staff",
-                  effective_basic,
-                  month_filter,
-              ),
-          )
-
-      existing_rows = run_query(
-          """
-            SELECT id, reg_no, name, designation, staff_category, basic_salary, absent_days, 
-                   late_days, days_in_month, considered_red_days, reason 
-            FROM salaries WHERE campus = ? AND month_year = ? ORDER BY staff_category, id;
-        """,
-          (selected_campus, month_filter),
-      )
 
     if existing_rows:
       df = pd.DataFrame(
@@ -730,6 +775,9 @@ else:
           work_df,
           num_rows="fixed",
           key=f"salary_sheet_{selected_campus}_{month_filter}_{cat}",
+          column_config={
+              "Staff Category": None,
+          },
       )
 
       # Subtotals for this category
