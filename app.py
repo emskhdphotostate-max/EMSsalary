@@ -8,31 +8,28 @@ st.set_page_config(
     page_title="Excellence Model School - Salary Management", layout="wide"
 )
 
-# Custom CSS styling for professional look & dark/clean theme
+# Custom Styling
 st.markdown(
     """
     <style>
     .main-header {
-        font-size: 26px;
+        font-size: 24px;
         font-weight: bold;
         color: #1E3A8A;
         text-align: center;
         margin-bottom: 20px;
-    }
-    .campus-title {
-        font-size: 20px;
-        font-weight: bold;
-        color: #047857;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# Neon Database Connection Setup
+
+# Neon Database Connection using Streamlit Secrets
 @st.cache_resource
 def init_connection():
-  return psycopg2.connect(os.environ.get("DATABASE_URL"))
+  db_url = st.secrets["neon"]["connection_string"]
+  return psycopg2.connect(db_url)
 
 
 def run_query(query, params=None):
@@ -53,7 +50,7 @@ def execute_non_query(query, params=None):
     conn.commit()
 
 
-# Database Table Initialization (Run once)
+# Initialize Database Table if not exists
 def init_db():
   query = """
     CREATE TABLE IF NOT EXISTS salaries (
@@ -105,7 +102,7 @@ if not st.session_state.authenticated:
       else:
         st.error("Invalid Password! Please try again.")
 else:
-  # Sidebar Navigation for 5 Campuses and Summary
+  # Sidebar Navigation for 5 Campuses and Summary Tab
   st.sidebar.title("🏫 School Portals")
   campuses = [
       "Kharadar",
@@ -123,12 +120,13 @@ else:
 
   if selected_tab != "Summary":
     st.markdown(
-        f"<div class='main-header'>EXCELLENCE MODEL SCHOOL - {selected_tab.upper()} BRANCH</div>",
+        f"<div class='main-header'>EXCELLENCE MODEL SCHOOL -"
+        f" {selected_tab.upper()} BRANCH</div>",
         unsafe_allow_html=True,
     )
     st.subheader(f"Salary Sheet for the Month of {month_filter}")
 
-    # Fetch Data for Selected Campus
+    # Fetch Data from Database
     query = """
             SELECT id, reg_no, name, designation, basic_salary, absent_days, late_days, 
                    deduction_late, days_in_month, considered_red_days, plus_one, reason 
@@ -136,7 +134,6 @@ else:
         """
     rows = run_query(query, (selected_tab, month_filter))
 
-    # Convert to DataFrame with all required columns
     columns = [
         "ID",
         "Reg No",
@@ -155,26 +152,10 @@ else:
     if rows:
       df = pd.DataFrame(rows, columns=columns)
     else:
-      # Default empty structure if no data yet
-      df = pd.DataFrame(
-          columns=[
-              "ID",
-              "Reg No",
-              "Name",
-              "Designation",
-              "Basic Salary",
-              "Absent Days",
-              "Late Days",
-              "Deduction Late",
-              "Days in Month",
-              "Considered Red Days",
-              "Plus 1",
-              "Reason of Pending",
-          ]
-      )
+      df = pd.DataFrame(columns=columns)
 
-    # Apply Automatic Formulas (Jaise aapne excel mein maanga hai)
     if not df.empty:
+      # Data Type Cleaning
       df["Basic Salary"] = pd.to_numeric(df["Basic Salary"]).fillna(0)
       df["Absent Days"] = pd.to_numeric(df["Absent Days"]).fillna(0)
       df["Late Days"] = pd.to_numeric(df["Late Days"]).fillna(0)
@@ -185,25 +166,16 @@ else:
       ).fillna(0)
       df["Plus 1"] = pd.to_numeric(df["Plus 1"]).fillna(0)
 
-      # Formulas calculation
-      # 1. Per Day Salary = Basic Salary / Days in Month
+      # Automatic Formulas Calculation
       df["Per Day"] = df.apply(
           lambda row: row["Basic Salary"] / row["Days in Month"]
           if row["Days in Month"] > 0
           else 0,
           axis=1,
       )
-
-      # 2. Deduction for Absent = Absent Days * Per Day Salary
       df["Ded for Absent"] = df["Absent Days"] * df["Per Day"]
-
-      # 3. Total Deduction = Ded for Absent + Deduction Late
       df["Total Deduction"] = df["Ded for Absent"] + df["Deduction Late"]
-
-      # 4. Considered Red Amount = Considered Red Days * Per Day Salary
       df["Considered Red Amount"] = df["Considered Red Days"] * df["Per Day"]
-
-      # 5. Final Salary = Basic Salary - Total Deduction + Considered Red Amount + (Plus 1 * Per Day)
       df["Final Salary"] = (
           df["Basic Salary"]
           - df["Total Deduction"]
@@ -211,7 +183,6 @@ else:
           + (df["Plus 1"] * df["Per Day"])
       )
 
-      # Reorder columns for clean look matching your Excel layout
       display_df = df[
           [
               "Reg No",
@@ -233,11 +204,9 @@ else:
           ]
       ]
 
-      # Data Editor to add/edit/delete rows directly online
       edited_df = st.data_editor(display_df, num_rows="dynamic", key=selected_tab)
 
-      if st.button("💾 Save All Changes to Neon Database"):
-        # Clear existing records for this campus/month and insert updated values
+      if st.button("💾 Save Changes to Database"):
         delete_query = (
             "DELETE FROM salaries WHERE campus = %s AND month_year = %s;"
         )
@@ -267,22 +236,20 @@ else:
                   month_filter,
               ),
           )
-        st.success(
-            "✅ All records and automatic calculations successfully updated!"
-        )
+        st.success("✅ Records and automatic formulas updated successfully!")
         st.rerun()
     else:
       st.info("No records found for this campus. Add new rows using the grid.")
 
   else:
-    # SUMMARY TAB
+    # SUMMARY TAB (Aggregating all 5 campuses automatically)
     st.markdown(
-        "<div class='main-header'>EXCELLENCE MODEL SCHOOL - CONSOLIDATED SUMMARY</div>",
+        "<div class='main-header'>EXCELLENCE MODEL SCHOOL - CONSOLIDATED"
+        " SUMMARY</div>",
         unsafe_allow_html=True,
     )
-    st.subheader(f"Summary Report for {month_filter} (All 5 Campuses)")
+    st.subheader(f"Summary Report for {month_filter} (All Campuses)")
 
-    # Fetch summary across all campuses
     sum_query = """
             SELECT campus, COUNT(id) as total_staff, SUM(basic_salary) as total_basic 
             FROM salaries WHERE month_year = %s GROUP BY campus;
@@ -296,11 +263,8 @@ else:
       )
       st.dataframe(sum_df, use_container_width=True)
     else:
-      st.info(
-          "No data entered yet across campuses for summary calculation."
-      )
+      st.info("No data entered yet across campuses for summary calculation.")
 
-  # Logout Option
   if st.sidebar.button("Logout"):
     st.session_state.authenticated = False
     st.rerun()
