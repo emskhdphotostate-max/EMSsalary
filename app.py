@@ -25,7 +25,7 @@ st.markdown(
     [data-testid="stSidebar"] div {
         color: #ffffff !important;
     }
-    /* Fix Logout Button Styling - Purple Text & White Background */
+    /* Logout Button Styling - Purple Text & White Background */
     [data-testid="stSidebar"] button {
         color: #2C1654 !important;
         background-color: #ffffff !important;
@@ -194,7 +194,6 @@ if "authenticated" not in st.session_state:
   st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
-  # Professional Styled Login Screen with LOGO.png
   st.markdown(
       "<div style='text-align: center; padding-top: 15px;'>",
       unsafe_allow_html=True,
@@ -242,7 +241,6 @@ if not st.session_state.authenticated:
         st.error("Invalid Password! Please try again.")
     st.markdown("</div>", unsafe_allow_html=True)
 else:
-  # Sidebar Navigation with Clean Centered Logo & Text (Image 1 Fixed)
   with st.sidebar:
     st.markdown(
         "<div"
@@ -290,14 +288,14 @@ else:
 
     month_filter = st.selectbox(
         "Select Month", list(MONTH_ORDER.keys()), index=7
-    )  # Default August 2026
+    )
 
     st.markdown("---")
     if st.button("🚪 Secure Logout", use_container_width=True):
       st.session_state.authenticated = False
       st.rerun()
 
-  # 1. STAFF DIRECTORY / MASTER MANAGEMENT TAB
+  # 1. STAFF DIRECTORY TAB
   if nav_mode == "Staff Directory (Master & Increment)":
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
@@ -307,13 +305,6 @@ else:
         f"<div class='sub-header'>{selected_campus.upper()} BRANCH — Staff"
         " Directory & Increments</div>",
         unsafe_allow_html=True,
-    )
-
-    st.info(
-        "Manage staff master records here. You can add new employees, set"
-        " their joining month, apply yearly increments, or mark status as"
-        " 'Left' for departing staff without breaking historical past salary"
-        " records."
     )
 
     emp_rows = run_query(
@@ -408,10 +399,7 @@ else:
                 else "",
             ),
         )
-      st.success(
-          "✅ Staff Master Directory updated successfully! Historical records"
-          " remain fully protected."
-      )
+      st.success("✅ Staff Master Directory updated successfully!")
       st.rerun()
 
   # 2. MONTHLY SALARY SHEET TAB
@@ -571,11 +559,6 @@ else:
         display_df,
         num_rows="fixed",
         key=f"salary_sheet_{selected_campus}_{month_filter}",
-        column_config={
-            "Basic Salary": st.column_config.NumberColumn(
-                "Basic Salary", help="Editable for salary adjustments/increments"
-            )
-        },
     )
 
     col_save, col_dl, col_pdf = st.columns([1, 1, 1])
@@ -703,25 +686,7 @@ else:
             use_container_width=True,
         )
 
-    if existing_rows:
-      st.markdown("### 📊 Branch Financial Summary")
-      m1, m2, m3, m4 = st.columns(4)
-      with m1:
-        st.metric("Total Staff", f"{len(df)}")
-      with m2:
-        st.metric(
-            "Total Basic Salary", f"Rs. {df['Basic Salary'].sum():,.2f}"
-        )
-      with m3:
-        st.metric(
-            "Total Deductions", f"Rs. {df['Total Deduction Amount'].sum():,.2f}"
-        )
-      with m4:
-        st.metric(
-            "Total Final Payout", f"Rs. {df['Total Final Salary'].sum():,.2f}"
-        )
-
-  # 3. EMPLOYEE YEARLY LEDGER & CHARTS TAB
+  # 3. EMPLOYEE YEARLY LEDGER TAB
   elif nav_mode == "Employee Yearly Ledger":
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
@@ -729,7 +694,7 @@ else:
     )
     st.markdown(
         f"<div class='sub-header'>{selected_campus.upper()} BRANCH — Employee"
-        " Yearly Salary Ledger (Jan 2026 - Dec 2026)</div>",
+        " Yearly Salary Ledger</div>",
         unsafe_allow_html=True,
     )
 
@@ -781,33 +746,13 @@ else:
             f"#### Yearly Financial Record for: **{selected_employee}**"
         )
         st.dataframe(y_df, use_container_width=True)
-
-        st.markdown("#### 📈 Yearly Salary & Deduction Trend")
-        chart_df = y_df.set_index("Month")[["Basic Salary", "Final Payout"]]
-        st.line_chart(chart_df)
-
-        chart_ded = y_df.set_index("Month")[["Total Deduction"]]
-        st.bar_chart(chart_ded)
-
-        csv_emp = y_df.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            label=f"📥 Download {selected_employee} Yearly Report (CSV)",
-            data=csv_emp,
-            file_name=f"{selected_employee}_Yearly_Ledger_2026.csv",
-            mime="text/csv",
-            use_container_width=True,
-        )
       else:
         st.info("No salary records found for this employee.")
     else:
-      st.info(
-          "No employee records available for this campus yet. Please save"
-          " monthly salary sheets first."
-      )
+      st.info("No employee records available for this campus yet.")
 
-  # 4. INDIVIDUAL SALARY SLIP GENERATOR TAB (Image 3 Fixed: Logos Added)
+  # 4. SALARY SLIP GENERATOR TAB (Updated with Considered Red Days right above Punctuality Bonus)
   elif nav_mode == "Salary Slip Generator":
-    # Top Section with Logo (First requested position in Image 3)
     c_img, c_title = st.columns([0.15, 0.85])
     with c_img:
       try:
@@ -852,7 +797,7 @@ else:
         plus_amount = p_one * per_day
         final_pay = b_sal - tot_ded + plus_amount
 
-        # Salary Slip Box with Logo inside (Second requested position in Image 3)
+        # Salary Slip Box (Considered Days added right below Basic Salary and above Punctuality Bonus)
         st.markdown(
             f"""
             <div style="border: 2px solid #2C1654; padding: 25px; border-radius: 10px; background-color: #ffffff; color: #000000; max-width: 700px; margin: auto;">
@@ -886,14 +831,14 @@ else:
                         <td style="padding: 6px; text-align: right;">-</td>
                     </tr>
                     <tr>
-                        <td style="padding: 6px;">Punctuality Bonus (+1)</td>
-                        <td style="padding: 6px; text-align: right;">{plus_amount:,.2f}</td>
+                        <td style="padding: 6px; color: #1f2937; font-size: 13px;"><b>Considered Days:</b> {cred_d}</td>
+                        <td style="padding: 6px; text-align: right;">-</td>
                         <td style="padding: 6px;">Late Days ({late_d} / 3)</td>
                         <td style="padding: 6px; text-align: right;">-</td>
                     </tr>
                     <tr>
-                        <td style="padding: 6px;">-</td>
-                        <td style="padding: 6px; text-align: right;">-</td>
+                        <td style="padding: 6px;">Punctuality Bonus (+1)</td>
+                        <td style="padding: 6px; text-align: right;">{plus_amount:,.2f}</td>
                         <td style="padding: 6px;">Total Deductions</td>
                         <td style="padding: 6px; text-align: right; color: red;">{tot_ded:,.2f}</td>
                     </tr>
@@ -916,6 +861,7 @@ else:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
+        # PDF Generation for Salary Slip
         slip_pdf = FPDF(orientation="P", unit="mm", format="A4")
         slip_pdf.add_page()
         slip_pdf.set_font("Arial", "B", 16)
@@ -950,7 +896,17 @@ else:
         slip_pdf.cell(
             90,
             6,
-            f"Attendance Adjustments (Absent: {abs_d}, Late: {late_d})",
+            f"Considered Days (Maaf Shuda): {cred_d}",
+            1,
+            0,
+            "L",
+        )
+        slip_pdf.cell(100, 6, "-", 1, 1, "R")
+
+        slip_pdf.cell(
+            90,
+            6,
+            f"Attendance Deductions (Absent: {abs_d}, Late: {late_d})",
             1,
             0,
             "L",
@@ -998,12 +954,9 @@ else:
             use_container_width=True,
         )
     else:
-      st.info(
-          "No salary records available for this month. Please generate or save"
-          " the Monthly Salary Sheet first."
-      )
+      st.info("No salary records available for this month.")
 
-  # 5. NETWORK SUMMARY TAB
+  # 5. SUMMARY TAB
   elif nav_mode == "Summary":
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
@@ -1063,16 +1016,5 @@ else:
           columns=["Campus Name", "Total Employees", "Total Basic Salary"],
       )
       st.dataframe(sum_df, use_container_width=True)
-
-      sum_csv = sum_df.to_csv(index=False).encode("utf-8")
-      st.download_button(
-          label="📥 Download Consolidated Summary Report (CSV)",
-          data=sum_csv,
-          file_name=f"EMS_Consolidated_Summary_{month_filter}.csv",
-          mime="text/csv",
-          use_container_width=True,
-      )
     else:
-      st.info(
-          "No data entered yet across campuses for summary and total calculation."
-      )
+      st.info("No data entered yet across campuses for summary.")
