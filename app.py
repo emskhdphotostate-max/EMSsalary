@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Professional Deep Purple SaaS / ERP Theme Custom Styling
+# Professional Deep Purple SaaS / ERP Theme Custom Styling with Spaced Navigation
 st.markdown(
     """
     <style>
@@ -26,6 +26,20 @@ st.markdown(
     [data-testid="stSidebar"] .stRadio label, 
     [data-testid="stSidebar"] div {
         color: #ffffff !important;
+    }
+    /* Professional Spacing for Radio Navigation Options */
+    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label {
+        background-color: rgba(255, 255, 255, 0.04);
+        padding: 10px 14px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label:hover {
+        background-color: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.3);
     }
     [data-testid="stSidebar"] button {
         color: #ffffff !important;
@@ -1036,7 +1050,6 @@ else:
         pdf.cell(sum(widths), 8, grand_label, 1, 1, "C", fill=True)
         pdf.ln(10)
 
-        # ---- SUMMARY OF SALARY TABLE (All Campuses Network Wide) ----
         pdf.set_font("Arial", "B", 13)
         pdf.set_text_color(44, 22, 84)
         pdf.cell(
