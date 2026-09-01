@@ -2,9 +2,9 @@ import base64
 import io
 import os
 import re
-import sqlite3
 from fpdf import FPDF
 import pandas as pd
+import psycopg2
 import streamlit as st
 
 # Page Configuration
@@ -71,10 +71,16 @@ st.markdown(
 )
 
 
-# SQLite Database Connection
+# Neon Database (PostgreSQL) Connection
 def init_connection():
-  conn = sqlite3.connect("school_salaries.db", check_same_thread=False)
-  return conn
+  db_url = st.secrets.get("DATABASE_URL")
+  if not db_url:
+    st.error(
+        "⚠️ DATABASE_URL not found in Streamlit Secrets! Please configure"
+        " secrets in Streamlit Cloud."
+    )
+    st.stop()
+  return psycopg2.connect(db_url)
 
 
 def run_query(query, params=None):
@@ -85,9 +91,14 @@ def run_query(query, params=None):
   else:
     cursor.execute(query)
   try:
-    return cursor.fetchall()
+    result = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return result
   except Exception:
     conn.commit()
+    cursor.close()
+    conn.close()
     return []
 
 
@@ -99,13 +110,12 @@ def execute_non_query(query, params=None):
   else:
     cursor.execute(query)
   conn.commit()
+  cursor.close()
+  conn.close()
 
 
 # Automatically next ID generate karne ka function with correct Campus Prefixes
 def get_next_employee_id(selected_campus):
-  conn = init_connection()
-  cursor = conn.cursor()
-
   if "Extension" in selected_campus:
     prefix = "KH EXT-"
   elif "Tower" in selected_campus:
@@ -119,13 +129,13 @@ def get_next_employee_id(selected_campus):
 
   try:
     query = (
-        "SELECT reg_no FROM employees WHERE campus = ? ORDER BY id DESC LIMIT 1"
+        "SELECT reg_no FROM employees WHERE campus = %s ORDER BY id DESC LIMIT"
+        " 1;"
     )
-    cursor.execute(query, (selected_campus,))
-    result = cursor.fetchone()
+    result = run_query(query, (selected_campus,))
 
-    if result and result[0]:
-      last_id = result[0]
+    if result and result[0] and result[0][0]:
+      last_id = result[0][0]
       numbers = re.findall(r"\d+", last_id)
       if numbers:
         next_num = int(numbers[-1]) + 1
@@ -136,18 +146,15 @@ def get_next_employee_id(selected_campus):
       new_id = f"{prefix}1"
   except Exception:
     new_id = f"{prefix}1"
-  finally:
-    cursor.close()
-    conn.close()
 
   return new_id
 
 
-# Initialize and Upgrade Database Tables safely
+# Initialize Database Tables in Neon PostgreSQL
 def init_db():
   execute_non_query("""
         CREATE TABLE IF NOT EXISTS employees (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             campus TEXT,
             reg_no TEXT,
             name TEXT,
@@ -164,7 +171,7 @@ def init_db():
 
   execute_non_query("""
         CREATE TABLE IF NOT EXISTS salaries (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             campus TEXT,
             reg_no TEXT,
             name TEXT,
@@ -179,27 +186,6 @@ def init_db():
             month_year TEXT
         );
     """)
-
-  cursor = init_connection().cursor()
-  cursor.execute("PRAGMA table_info(employees);")
-  emp_columns = [col[1] for col in cursor.fetchall()]
-  if "staff_category" not in emp_columns:
-    execute_non_query(
-        "ALTER TABLE employees ADD COLUMN staff_category TEXT DEFAULT 'Teaching"
-        " Staff';"
-    )
-  if "father_name" not in emp_columns:
-    execute_non_query(
-        "ALTER TABLE employees ADD COLUMN father_name TEXT DEFAULT '';"
-    )
-
-  cursor.execute("PRAGMA table_info(salaries);")
-  sal_columns = [col[1] for col in cursor.fetchall()]
-  if "staff_category" not in sal_columns:
-    execute_non_query(
-        "ALTER TABLE salaries ADD COLUMN staff_category TEXT DEFAULT 'Teaching"
-        " Staff';"
-    )
 
 
 init_db()
@@ -229,7 +215,7 @@ if "authenticated" not in st.session_state:
   st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
-  # Perfectly Centered Clean Login Screen
+  # Centered Login Screen
   logo_html = ""
   if os.path.exists("LOGO.png"):
     with open("LOGO.png", "rb") as f:
@@ -259,7 +245,6 @@ if not st.session_state.authenticated:
         """,
         unsafe_allow_html=True,
     )
-    # Using native Streamlit inputs cleanly inside the centered column
     password_input = st.text_input(
         "Enter Password", type="password", key="login_pass"
     )
@@ -388,7 +373,7 @@ else:
         )
       else:
         existing_check = run_query(
-            "SELECT id FROM employees WHERE campus = ? AND reg_no = ?;",
+            "SELECT id FROM employees WHERE campus = %s AND reg_no = %s;",
             (new_campus, new_reg_no),
         )
         if existing_check:
@@ -400,7 +385,7 @@ else:
           execute_non_query(
               """
                     INSERT INTO employees (campus, reg_no, name, father_name, designation, staff_category, basic_salary, increment, joining_month, status, leaving_month)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, '');
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, 0, %s, %s, '');
                 """,
               (
                   new_campus,
@@ -415,14 +400,13 @@ else:
               ),
           )
 
-          # Also add to salaries table if eligible for current month
           j_idx = get_month_index(new_joining_month)
           curr_idx = get_month_index(month_filter)
           if j_idx <= curr_idx and new_status == "Active":
             execute_non_query(
                 """
                         INSERT INTO salaries (campus, reg_no, name, designation, staff_category, basic_salary, absent_days, late_days, days_in_month, considered_red_days, reason, month_year)
-                        VALUES (?, ?, ?, ?, ?, ?, 0, 0, 30, 0, '', ?);
+                        VALUES (%s, %s, %s, %s, %s, %s, 0, 0, 30, 0, '', %s);
                     """,
                 (
                     new_campus,
@@ -457,7 +441,7 @@ else:
     emp_rows = run_query(
         """
             SELECT id, reg_no, name, father_name, designation, staff_category, basic_salary, increment, joining_month, status, leaving_month 
-            FROM employees WHERE campus = ? ORDER BY staff_category, id;
+            FROM employees WHERE campus = %s ORDER BY staff_category, id;
         """,
         (selected_campus,),
     )
@@ -529,7 +513,7 @@ else:
 
     if st.button("💾 Save Staff Directory Changes", use_container_width=True):
       execute_non_query(
-          "DELETE FROM employees WHERE campus = ?;", (selected_campus,)
+          "DELETE FROM employees WHERE campus = %s;", (selected_campus,)
       )
       for idx, row in edited_emp_df.iterrows():
         if pd.isna(row["Name"]) or str(row["Name"]).strip() == "":
@@ -537,7 +521,7 @@ else:
         execute_non_query(
             """
                     INSERT INTO employees (campus, reg_no, name, father_name, designation, staff_category, basic_salary, increment, joining_month, status, leaving_month)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """,
             (
                 selected_campus,
@@ -585,7 +569,7 @@ else:
     master_emps = run_query(
         """
             SELECT reg_no, name, designation, staff_category, basic_salary, increment, joining_month, status, leaving_month 
-            FROM employees WHERE campus = ?;
+            FROM employees WHERE campus = %s;
         """,
         (selected_campus,),
     )
@@ -605,7 +589,7 @@ else:
 
       existing_entry = run_query(
           """
-                SELECT id FROM salaries WHERE campus = ? AND month_year = ? AND reg_no = ?;
+                SELECT id FROM salaries WHERE campus = %s AND month_year = %s AND reg_no = %s;
             """,
           (selected_campus, month_filter, r_no),
       )
@@ -615,7 +599,7 @@ else:
         execute_non_query(
             """
                     INSERT INTO salaries (campus, reg_no, name, designation, staff_category, basic_salary, absent_days, late_days, days_in_month, considered_red_days, reason, month_year)
-                    VALUES (?, ?, ?, ?, ?, ?, 0, 0, 30, 0, '', ?);
+                    VALUES (%s, %s, %s, %s, %s, %s, 0, 0, 30, 0, '', %s);
                 """,
             (
                 selected_campus,
@@ -630,15 +614,15 @@ else:
       elif not is_eligible and existing_entry:
         execute_non_query(
             """
-                    DELETE FROM salaries WHERE campus = ? AND month_year = ? AND reg_no = ?;
+                    DELETE FROM salaries WHERE campus = %s AND month_year = %s AND reg_no = %s;
                 """,
             (selected_campus, month_filter, r_no),
         )
       elif is_eligible and existing_entry:
         execute_non_query(
             """
-                    UPDATE salaries SET staff_category = ?, designation = ?, name = ?, basic_salary = ? 
-                    WHERE campus = ? AND month_year = ? AND reg_no = ?;
+                    UPDATE salaries SET staff_category = %s, designation = %s, name = %s, basic_salary = %s 
+                    WHERE campus = %s AND month_year = %s AND reg_no = %s;
                 """,
             (
                 s_cat if s_cat else "Teaching Staff",
@@ -655,7 +639,7 @@ else:
         """
             SELECT id, reg_no, name, designation, staff_category, basic_salary, absent_days, 
                    late_days, days_in_month, considered_red_days, reason 
-            FROM salaries WHERE campus = ? AND month_year = ? ORDER BY staff_category, id;
+            FROM salaries WHERE campus = %s AND month_year = %s ORDER BY staff_category, id;
         """,
         (selected_campus, month_filter),
     )
@@ -809,7 +793,7 @@ else:
     with col_save:
       if st.button("💾 Save Changes to Database", use_container_width=True):
         execute_non_query(
-            "DELETE FROM salaries WHERE campus = ? AND month_year = ?;",
+            "DELETE FROM salaries WHERE campus = %s AND month_year = %s;",
             (selected_campus, month_filter),
         )
 
@@ -820,7 +804,7 @@ else:
               """
                         INSERT INTO salaries (campus, reg_no, name, designation, staff_category, basic_salary, absent_days, 
                                               late_days, days_in_month, considered_red_days, reason, month_year)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                     """,
               (
                   selected_campus,
@@ -851,7 +835,7 @@ else:
                   month_filter,
               ),
           )
-        st.success("✅ Monthly salary sheet saved successfully!")
+        st.success("✅ Monthly salary sheet saved successfully to Neon!")
         st.rerun()
 
     with col_dl:
@@ -963,7 +947,7 @@ else:
     )
 
     emp_names_raw = run_query(
-        "SELECT DISTINCT name FROM salaries WHERE campus = ? ORDER BY name;",
+        "SELECT DISTINCT name FROM salaries WHERE campus = %s ORDER BY name;",
         (selected_campus,),
     )
     emp_names = [r[0] for r in emp_names_raw if r[0]]
@@ -977,7 +961,7 @@ else:
           """
                 SELECT month_year, basic_salary, absent_days, late_days, days_in_month, 
                        considered_red_days, reason 
-                FROM salaries WHERE campus = ? AND name = ?;
+                FROM salaries WHERE campus = %s AND name = %s;
             """,
           (selected_campus, selected_employee),
       )
@@ -1038,7 +1022,7 @@ else:
         """
             SELECT reg_no, name, designation, staff_category, basic_salary, absent_days, late_days, 
                    days_in_month, considered_red_days, reason 
-            FROM salaries WHERE campus = ? AND month_year = ? ORDER BY name;
+            FROM salaries WHERE campus = %s AND month_year = %s ORDER BY name;
         """,
         (selected_campus, month_filter),
     )
@@ -1253,13 +1237,13 @@ else:
 
     sum_query = """
             SELECT campus, COUNT(id) as total_staff, SUM(basic_salary) as total_basic 
-            FROM salaries WHERE month_year = ? GROUP BY campus;
+            FROM salaries WHERE month_year = %s GROUP BY campus;
         """
     summary_data = run_query(sum_query, (month_filter,))
 
     all_q = """
             SELECT basic_salary, absent_days, late_days, days_in_month, considered_red_days 
-            FROM salaries WHERE month_year = ?;
+            FROM salaries WHERE month_year = %s;
         """
     all_rows = run_query(all_q, (month_filter,))
 
