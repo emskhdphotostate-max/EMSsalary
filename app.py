@@ -552,7 +552,7 @@ else:
           data=sum_csv,
           file_name=f"EMS_Consolidated_Summary_{month_filter}.csv",
           mime="text/csv",
-          use_count_width=True,
+          use_container_width=True,  # 👈 Yahan theek kar diya gaya hai
       )
     else:
       st.info(
