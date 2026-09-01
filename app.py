@@ -751,7 +751,7 @@ else:
     else:
       st.info("No employee records available for this campus yet.")
 
-  # 4. SALARY SLIP GENERATOR TAB (Updated with Considered Red Days right above Punctuality Bonus)
+  # 4. SALARY SLIP GENERATOR TAB (Updated with Considered Days Amount)
   elif nav_mode == "Salary Slip Generator":
     c_img, c_title = st.columns([0.15, 0.85])
     with c_img:
@@ -789,6 +789,7 @@ else:
             selected_slip_name
         ]
         per_day = b_sal / dim if dim > 0 else 0
+        cred_amount = cred_d * per_day  # Considered days monetary value
         auto_ded_late = late_d / 3.0
         tot_units = abs_d + auto_ded_late
         net_units = max(0, tot_units - cred_d)
@@ -797,7 +798,7 @@ else:
         plus_amount = p_one * per_day
         final_pay = b_sal - tot_ded + plus_amount
 
-        # Salary Slip Box (Considered Days added right below Basic Salary and above Punctuality Bonus)
+        # Salary Slip Box (Considered Days & its Amount shown right below Basic Salary)
         st.markdown(
             f"""
             <div style="border: 2px solid #2C1654; padding: 25px; border-radius: 10px; background-color: #ffffff; color: #000000; max-width: 700px; margin: auto;">
@@ -832,7 +833,7 @@ else:
                     </tr>
                     <tr>
                         <td style="padding: 6px; color: #1f2937; font-size: 13px;"><b>Considered Days:</b> {cred_d}</td>
-                        <td style="padding: 6px; text-align: right;">-</td>
+                        <td style="padding: 6px; text-align: right; color: #047857;">+ {cred_amount:,.2f}</td>
                         <td style="padding: 6px;">Late Days ({late_d} / 3)</td>
                         <td style="padding: 6px; text-align: right;">-</td>
                     </tr>
@@ -896,12 +897,12 @@ else:
         slip_pdf.cell(
             90,
             6,
-            f"Considered Days (Maaf Shuda): {cred_d}",
+            f"Considered Days (Saved/Waived): {cred_d}",
             1,
             0,
             "L",
         )
-        slip_pdf.cell(100, 6, "-", 1, 1, "R")
+        slip_pdf.cell(100, 6, f"+{cred_amount:,.2f}", 1, 1, "R")
 
         slip_pdf.cell(
             90,
