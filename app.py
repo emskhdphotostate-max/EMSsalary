@@ -751,7 +751,7 @@ else:
     else:
       st.info("No employee records available for this campus yet.")
 
-  # 4. SALARY SLIP GENERATOR TAB (Updated with Absent & Considered Amounts)
+  # 4. SALARY SLIP GENERATOR TAB
   elif nav_mode == "Salary Slip Generator":
     c_img, c_title = st.columns([0.15, 0.85])
     with c_img:
@@ -789,8 +789,8 @@ else:
             selected_slip_name
         ]
         per_day = b_sal / dim if dim > 0 else 0
-        cred_amount = cred_d * per_day  # Considered days monetary value
-        absent_gross_amount = abs_d * per_day  # Gross absent deduction value
+        cred_amount = cred_d * per_day
+        absent_gross_amount = abs_d * per_day
         auto_ded_late = late_d / 3.0
         tot_units = abs_d + auto_ded_late
         net_units = max(0, tot_units - cred_d)
@@ -799,7 +799,6 @@ else:
         plus_amount = p_one * per_day
         final_pay = b_sal - tot_ded + plus_amount
 
-        # Salary Slip Box (Absent Days Gross Amount shown on the right side)
         st.markdown(
             f"""
             <div style="border: 2px solid #2C1654; padding: 25px; border-radius: 10px; background-color: #ffffff; color: #000000; max-width: 700px; margin: auto;">
@@ -863,7 +862,6 @@ else:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # PDF Generation for Salary Slip
         slip_pdf = FPDF(orientation="P", unit="mm", format="A4")
         slip_pdf.add_page()
         slip_pdf.set_font("Arial", "B", 16)
@@ -1000,7 +998,7 @@ else:
       total_basic_all = sum([r[2] for r in summary_data])
 
       tot_deductions = 0
-      tot_final =, 0
+      tot_final = 0  # <--- Fixed syntax error here
       for r in all_rows:
         b_sal, abs_d, late_d, dim, cred_d = r
         per_day = b_sal / dim if dim > 0 else 0
