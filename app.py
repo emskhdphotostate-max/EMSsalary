@@ -668,6 +668,7 @@ else:
               "Basic Salary",
               "Absent Days",
               "Late Days",
+              "Total Absent/Late Units",
               "Considered Red Days",
               "Days in Month",
               "Per Day",
@@ -687,6 +688,7 @@ else:
               "Basic Salary",
               "Absent Days",
               "Late Days",
+              "Total Absent/Late Units",
               "Considered Red Days",
               "Days in Month",
               "Per Day",
@@ -726,6 +728,9 @@ else:
               ),
               "Late Days": st.column_config.NumberColumn(
                   "Late", format="%d", step=1
+              ),
+              "Total Absent/Late Units": st.column_config.NumberColumn(
+                  "Total Abs+Late", format="%d"
               ),
               "Considered Red Days": st.column_config.NumberColumn(
                   "Considered", format="%d", step=1
@@ -887,7 +892,7 @@ else:
           pdf.set_text_color(44, 22, 84)
           pdf.cell(0, 8, f"{cat}", 0, 1, "L")
 
-          pdf.set_font("Arial", "B", 8.5)
+          pdf.set_font("Arial", "B", 8)
           pdf.set_fill_color(44, 22, 84)
           pdf.set_text_color(255, 255, 255)
 
@@ -898,6 +903,7 @@ else:
               "Basic",
               "Abs",
               "Late",
+              "Tot Abs+Late",
               "Considered",
               "Days",
               "Per Day",
@@ -905,13 +911,13 @@ else:
               "Final Pay",
               "Remarks",
           ]
-          widths = [16, 38, 35, 18, 12, 12, 18, 12, 18, 18, 20, 40]
+          widths = [15, 36, 32, 17, 10, 10, 18, 16, 11, 16, 17, 18, 43]
 
           for i, col in enumerate(cols):
             pdf.cell(widths[i], 7, col, 1, 0, "C", fill=True)
           pdf.ln()
 
-          pdf.set_font("Arial", "", 8)
+          pdf.set_font("Arial", "", 7.5)
           pdf.set_text_color(0, 0, 0)
           fill_row = False
 
@@ -930,9 +936,9 @@ else:
               pdf.set_fill_color(255, 255, 255)
 
             pdf.cell(widths[0], 6, str(row["Reg No"]), 1, 0, "C", fill=True)
-            pdf.cell(widths[1], 6, str(row["Name"])[:20], 1, 0, "L", fill=True)
+            pdf.cell(widths[1], 6, str(row["Name"])[:18], 1, 0, "L", fill=True)
             pdf.cell(
-                widths[2], 6, str(row["Designation"])[:20], 1, 0, "L", fill=True
+                widths[2], 6, str(row["Designation"])[:18], 1, 0, "L", fill=True
             )
             pdf.cell(
                 widths[3],
@@ -952,7 +958,7 @@ else:
             pdf.cell(
                 widths[6],
                 6,
-                str(int(row["Considered Red Days"])),
+                str(int(row["Total Absent/Late Units"])),
                 1,
                 0,
                 "C",
@@ -961,6 +967,15 @@ else:
             pdf.cell(
                 widths[7],
                 6,
+                str(int(row["Considered Red Days"])),
+                1,
+                0,
+                "C",
+                fill=True,
+            )
+            pdf.cell(
+                widths[8],
+                6,
                 str(int(row["Days in Month"])),
                 1,
                 0,
@@ -968,10 +983,10 @@ else:
                 fill=True,
             )
             pdf.cell(
-                widths[8], 6, f"{row['Per Day']:,.1f}", 1, 0, "R", fill=True
+                widths[9], 6, f"{row['Per Day']:,.1f}", 1, 0, "R", fill=True
             )
             pdf.cell(
-                widths[9],
+                widths[10],
                 6,
                 f"{row['Total Deduction Amount']:,.1f}",
                 1,
@@ -980,7 +995,7 @@ else:
                 fill=True,
             )
             pdf.cell(
-                widths[10],
+                widths[11],
                 6,
                 f"{row['Total Final Salary']:,.0f}",
                 1,
@@ -989,9 +1004,9 @@ else:
                 fill=True,
             )
             pdf.cell(
-                widths[11],
+                widths[12],
                 6,
-                str(row["Remarks"])[:28] if pd.notna(row["Remarks"]) else "",
+                str(row["Remarks"])[:25] if pd.notna(row["Remarks"]) else "",
                 1,
                 0,
                 "L",
@@ -1000,14 +1015,14 @@ else:
             pdf.ln()
             fill_row = not fill_row
 
-          pdf.set_font("Arial", "B", 9)
+          pdf.set_font("Arial", "B", 8.5)
           pdf.set_fill_color(229, 231, 235)
           pdf.cell(sum(widths[:3]), 6, f"Total {cat}:", 1, 0, "R", fill=True)
           pdf.cell(widths[3], 6, f"{sub_basic:,.0f}", 1, 0, "R", fill=True)
-          pdf.cell(sum(widths[4:9]), 6, "", 1, 0, "C", fill=True)
-          pdf.cell(widths[9], 6, f"{sub_ded:,.2f}", 1, 0, "R", fill=True)
-          pdf.cell(widths[10], 6, f"{sub_final:,.0f}", 1, 0, "R", fill=True)
-          pdf.cell(widths[11], 6, "", 1, 0, "C", fill=True)
+          pdf.cell(sum(widths[4:10]), 6, "", 1, 0, "C", fill=True)
+          pdf.cell(widths[10], 6, f"{sub_ded:,.2f}", 1, 0, "R", fill=True)
+          pdf.cell(widths[11], 6, f"{sub_final:,.0f}", 1, 0, "R", fill=True)
+          pdf.cell(widths[12], 6, "", 1, 0, "C", fill=True)
           pdf.ln(8)
 
         pdf.set_font("Arial", "B", 10)
