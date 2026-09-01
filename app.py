@@ -229,40 +229,37 @@ if "authenticated" not in st.session_state:
   st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
+  # Perfectly Centered Clean Login Screen
+  logo_html = ""
+  if os.path.exists("LOGO.png"):
+    with open("LOGO.png", "rb") as f:
+      logo_b64 = base64.b64encode(f.read()).decode()
+      logo_html = f'<img src="data:image/png;base64,{logo_b64}" width="90" style="margin-bottom: 10px; border-radius: 10px; box-shadow: 0 3px 8px rgba(0,0,0,0.15);">'
+  else:
+    logo_html = '<h1 style="margin:0;">🎓</h1>'
+
   st.markdown(
-      "<div style='text-align: center; padding-top: 15px;'>",
+      f"""
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; margin-top: 40px; margin-bottom: 20px;">
+            {logo_html}
+            <h1 style="color: #2C1654; margin: 5px 0 0 0; font-weight: 800; font-size: 32px;">EXCELLENCE MODEL SCHOOL</h1>
+            <p style="color: #4B5563; font-weight: 600; font-size: 16px; margin-top: 5px;">Salary Management ERP Portal</p>
+        </div>
+        """,
       unsafe_allow_html=True,
   )
-  try:
-    st.image("LOGO.png", width=110)
-  except Exception:
-    st.markdown("<h1>🎓</h1>", unsafe_allow_html=True)
-  st.markdown(
-      "<h1 style='color: #2C1654; margin-top: 10px; font-weight: 800;'>EXCELLENCE"
-      " MODEL SCHOOL</h1>",
-      unsafe_allow_html=True,
-  )
-  st.markdown(
-      "<h3 style='color: #4B5563; font-weight: 500; font-size: 17px;'>Salary"
-      " Management ERP Portal</h3>",
-      unsafe_allow_html=True,
-  )
-  st.markdown("</div>", unsafe_allow_html=True)
 
   col1, col2, col3 = st.columns([1, 1.2, 1])
   with col2:
     st.markdown(
-        "<div style='background: #ffffff; padding: 30px; border-radius: 12px;"
-        " box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e5e7eb;"
-        " margin-top: 10px;'>",
+        """
+        <div style="background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 6px 20px rgba(44,22,84,0.12); border: 1px solid #e5e7eb;">
+            <h3 style="color: #2C1654; text-align: center; margin-bottom: 20px; font-size: 20px; font-weight: 700;">🔒 Secure System Login</h3>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
-    st.markdown(
-        "<h3"
-        " style='color: #2C1654; text-align: center; margin-bottom:"
-        " 20px; font-size: 20px;'>🔒 Secure System Login</h3>",
-        unsafe_allow_html=True,
-    )
+    # Using native Streamlit inputs cleanly inside the centered column
     password_input = st.text_input(
         "Enter Password", type="password", key="login_pass"
     )
@@ -274,7 +271,6 @@ if not st.session_state.authenticated:
         st.rerun()
       else:
         st.error("Invalid Password! Please try again.")
-    st.markdown("</div>", unsafe_allow_html=True)
 else:
   with st.sidebar:
     logo_html = ""
@@ -586,7 +582,6 @@ else:
 
     current_m_idx = get_month_index(month_filter)
 
-    # Automatically sync/refresh salaries table with master employees based on joining month & status
     master_emps = run_query(
         """
             SELECT reg_no, name, designation, staff_category, basic_salary, increment, joining_month, status, leaving_month 
@@ -608,7 +603,6 @@ else:
           if current_m_idx <= l_idx:
             is_eligible = True
 
-      # Check if already in salaries for this month
       existing_entry = run_query(
           """
                 SELECT id FROM salaries WHERE campus = ? AND month_year = ? AND reg_no = ?;
@@ -634,7 +628,6 @@ else:
             ),
         )
       elif not is_eligible and existing_entry:
-        # Remove if no longer eligible (e.g. joined in later month)
         execute_non_query(
             """
                     DELETE FROM salaries WHERE campus = ? AND month_year = ? AND reg_no = ?;
@@ -642,7 +635,6 @@ else:
             (selected_campus, month_filter, r_no),
         )
       elif is_eligible and existing_entry:
-        # Update category/designation/basic in case it was changed in Master Directory
         execute_non_query(
             """
                     UPDATE salaries SET staff_category = ?, designation = ?, name = ?, basic_salary = ? 
@@ -780,7 +772,6 @@ else:
           },
       )
 
-      # Subtotals for this category
       if not edited_cat_df.empty:
         sub_basic = edited_cat_df["Basic Salary"].sum()
         sub_ded = edited_cat_df["Total Deduction Amount"].sum()
@@ -796,11 +787,9 @@ else:
             unsafe_allow_html=True,
         )
 
-      # Store back with category for saving
       edited_cat_df["Staff Category"] = cat
       cat_dfs[cat] = edited_cat_df
 
-    # Grand Total across all sections
     all_edited_combined = pd.concat(cat_dfs.values(), ignore_index=True)
     if not all_edited_combined.empty:
       grand_basic = all_edited_combined["Basic Salary"].sum()
