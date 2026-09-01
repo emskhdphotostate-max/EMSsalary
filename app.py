@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import re
 import sqlite3
 from fpdf import FPDF
 import pandas as pd
@@ -90,6 +91,42 @@ def execute_non_query(query, params=None):
   else:
     cursor.execute(query)
   conn.commit()
+
+
+# Automatically next ID generate karne ka function
+def get_next_employee_id(selected_campus):
+  conn = init_connection()
+  cursor = conn.cursor()
+
+  if "Extension" in selected_campus:
+    prefix = "KH EXT-"
+  else:
+    prefix = "KH-"
+
+  try:
+    query = (
+        "SELECT reg_no FROM employees WHERE campus = ? ORDER BY id DESC LIMIT 1"
+    )
+    cursor.execute(query, (selected_campus,))
+    result = cursor.fetchone()
+
+    if result and result[0]:
+      last_id = result[0]
+      numbers = re.findall(r"\d+", last_id)
+      if numbers:
+        next_num = int(numbers[-1]) + 1
+        new_id = f"{prefix}{next_num}"
+      else:
+        new_id = f"{prefix}1"
+    else:
+      new_id = f"{prefix}1"
+  except Exception:
+    new_id = f"{prefix}1"
+  finally:
+    cursor.close()
+    conn.close()
+
+  return new_id
 
 
 # Initialize and Upgrade Database Tables safely
@@ -337,7 +374,13 @@ else:
               "Park View",
           ].index(selected_campus),
       )
-      new_reg_no = st.text_input("Registration / Employee ID (e.g. 002)")
+
+      # Automatically generate next ID based on selected campus
+      auto_generated_id = get_next_employee_id(new_campus)
+
+      new_reg_no = st.text_input(
+          "Registration / Employee ID", value=auto_generated_id
+      )
       new_name = st.text_input("Staff Name")
       new_father_name = st.text_input("Father's Name")
 
@@ -364,7 +407,6 @@ else:
             "⚠️ Please fill in at least the Employee ID and Staff Name fields!"
         )
       else:
-        # Check if Reg No already exists in this campus
         existing_check = run_query(
             "SELECT id FROM employees WHERE campus = ? AND reg_no = ?;",
             (new_campus, new_reg_no),
@@ -392,8 +434,9 @@ else:
               ),
           )
           st.success(
-              f"✅ Successfully registered {new_name} ({new_designation}) for"
-              f" {new_campus} campus starting from {new_joining_month}!"
+              f"✅ Successfully registered {new_name} ({new_designation}) with ID"
+              f" {new_reg_no} for {new_campus} campus starting from"
+              f" {new_joining_month}!"
           )
           st.balloons()
 
@@ -545,7 +588,6 @@ else:
         r_no, name, desig, b_sal, inc, j_month, status, l_month = emp
         j_idx = get_month_index(j_month)
 
-        # Eligibility check: Joined on or before current month, AND (Active OR Leaving month is after or equal to current month)
         is_eligible = False
         if j_idx <= current_m_idx:
           if status == "Active":
