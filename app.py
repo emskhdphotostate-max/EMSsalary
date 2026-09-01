@@ -634,7 +634,10 @@ else:
           else 0,
           axis=1,
       )
-      df["Deduction Late"] = df["Late Days"] / 3.0
+      # 3 late days = 1 day deduction (Integer division, no fraction until full 3 days)
+      df["Deduction Late"] = df["Late Days"].apply(
+          lambda x: int(x // 3) if pd.notna(x) else 0
+      )
       df["Total Absent/Late Units"] = df["Absent Days"] + df["Deduction Late"]
       df["Net Deduction Units"] = df.apply(
           lambda row: max(
@@ -696,7 +699,7 @@ else:
 
     for cat in categories:
       st.markdown(
-          f"<div class='section-title'>📌 {cat} PORTION</div>",
+          f"<div class='section-title'>📌 {cat}</div>",
           unsafe_allow_html=True,
       )
       cat_subset = full_display_df[full_display_df["Staff Category"] == cat]
@@ -800,16 +803,14 @@ else:
 
     with col_pdf:
       if existing_rows:
-        # Professional PDF Generator with Logo & Clean Title
         pdf = FPDF(orientation="L", unit="mm", format="A4")
         pdf.add_page()
 
-        # Header with Logo
         if os.path.exists("LOGO.png"):
           pdf.image("LOGO.png", x=12, y=10, w=16)
 
         pdf.set_font("Arial", "B", 16)
-        pdf.set_text_color(44, 22, 84)  # Deep Purple
+        pdf.set_text_color(44, 22, 84)
         pdf.cell(
             0,
             8,
@@ -851,12 +852,10 @@ else:
           if cat_data.empty:
             continue
 
-          # Category Section Heading (Fixed to clean name like 'Admin Staff')
           pdf.set_font("Arial", "B", 12)
           pdf.set_text_color(44, 22, 84)
           pdf.cell(0, 8, f"{cat}", 0, 1, "L")
 
-          # Table Header Styling
           pdf.set_font("Arial", "B", 8.5)
           pdf.set_fill_color(44, 22, 84)
           pdf.set_text_color(255, 255, 255)
@@ -880,7 +879,6 @@ else:
             pdf.cell(widths[i], 7, col, 1, 0, "C", fill=True)
           pdf.ln()
 
-          # Table Rows
           pdf.set_font("Arial", "", 8.5)
           pdf.set_text_color(0, 0, 0)
           fill_row = False
@@ -1039,7 +1037,7 @@ else:
         for yr in yearly_rows:
           m_yr, b_sal, abs_d, late_d, dim, cred_d, reason = yr
           per_day = b_sal / dim if dim > 0 else 0
-          auto_ded_late = late_d / 3.0
+          auto_ded_late = int(late_d // 3)
           net_units = max(0, (abs_d + auto_ded_late) - cred_d)
           tot_ded = net_units * per_day
           p_one = 1 if abs_d == 0 and late_d == 0 else 0
@@ -1103,7 +1101,7 @@ else:
         per_day = b_sal / dim if dim > 0 else 0
         cred_amount = cred_d * per_day
         absent_gross_amount = abs_d * per_day
-        auto_ded_late = late_d / 3.0
+        auto_ded_late = int(late_d // 3)
         tot_units = abs_d + auto_ded_late
         net_units = max(0, tot_units - cred_d)
         tot_ded = net_units * per_day
@@ -1115,7 +1113,7 @@ else:
             f"""
             <div style="border: 2px solid #2C1654; padding: 25px; border-radius: 10px; background-color: #ffffff; color: #000000; max-width: 700px; margin: auto;">
                 <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 5px;">
-                    <img src="data:image/png;base64,{base64.b64encode(open('LOGO.png', 'rb').read()).decode() if os.path.exists('LOGO.png') else ''}" width="50" style="vertical-align: middle;">
+                    <img src="data:image/png;base64,{base64.b64encode(open('LOGO.png', 'rb").read()).decode() if os.path.exists('LOGO.png') else ''}" width="50" style="vertical-align: middle;">
                     <h3 style="color: #2C1654; margin: 0;">EXCELLENCE MODEL SCHOOL</h3>
                 </div>
                 <p style="text-align: center; font-size: 13px; color: gray; margin-top: 2px;">Campus: {selected_campus} | Salary Slip for {month_filter}</p>
@@ -1146,7 +1144,7 @@ else:
                     <tr>
                         <td style="padding: 6px; color: #1f2937; font-size: 13px;"><b>Considered Days:</b> {cred_d}</td>
                         <td style="padding: 6px; text-align: right; color: #047857;">+ {cred_amount:,.2f}</td>
-                        <td style="padding: 6px;">Late Days ({late_d} / 3)</td>
+                        <td style="padding: 6px;">Late Days ({late_d} -> {auto_ded_late} Ded. Day)</td>
                         <td style="padding: 6px; text-align: right;">-</td>
                     </tr>
                     <tr>
@@ -1206,10 +1204,14 @@ else:
       for r in all_rows:
         b_sal, abs_d, late_d, dim, cred_d = r
         per_day = b_sal / dim if dim > 0 else 0
-        auto_ded_late = late_d / 3.0
+        auto_ded_late = int(late_d // 3)
         net_units = max(0, (abs_d + auto_ded_late) - cred_d)
         total_ded = net_units * per_day
-        f_sal = b_sal - total_ded + ((1 if abs_d == 0 and late_d == 0 else 0) * per_day)
+        f_sal = (
+            b_sal
+            - total_ded
+            + ((1 if abs_d == 0 and late_d == 0 else 0) * per_day)
+        )
         tot_deductions += total_ded
         tot_final += f_sal
 
