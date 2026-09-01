@@ -9,22 +9,32 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Professional Custom Styling (SaaS / ERP Theme)
+# Professional Deep Purple SaaS / ERP Theme Custom Styling
 st.markdown(
     """
     <style>
+    /* Main Background & Sidebar Theme matching reference */
+    [data-testid="stSidebar"] {
+        background-color: #2C1654;
+        color: #ffffff;
+    }
+    [data-testid="stSidebar"] .stSelectbox label, 
+    [data-testid="stSidebar"] .stRadio label, 
+    [data-testid="stSidebar"] div {
+        color: #ffffff !important;
+    }
     .main-header {
-        font-size: 28px;
+        font-size: 26px;
         font-weight: 800;
-        color: #1E3A8A;
+        color: #2C1654;
         text-align: center;
-        margin-bottom: 5px;
+        margin-bottom: 2px;
     }
     .sub-header {
-        font-size: 16px;
+        font-size: 15px;
         color: #4B5563;
         text-align: center;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
         font-weight: 500;
     }
     </style>
@@ -63,9 +73,8 @@ def execute_non_query(query, params=None):
   conn.commit()
 
 
-# Initialize Database Tables (Employees Master with Joining/Leaving tracking + Monthly Salaries)
+# Initialize and Upgrade Database Tables safely
 def init_db():
-  # Master Employees Table
   execute_non_query("""
         CREATE TABLE IF NOT EXISTS employees (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -81,7 +90,6 @@ def init_db():
         );
     """)
 
-  # Monthly Attendance & Salary Records Table
   execute_non_query("""
         CREATE TABLE IF NOT EXISTS salaries (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -99,25 +107,47 @@ def init_db():
         );
     """)
 
+  # Safe column check/migration for existing databases
+  cursor = init_connection().cursor()
+  cursor.execute("PRAGMA table_info(employees);")
+  columns = [col[1] for col in cursor.fetchall()]
+  if "joining_month" not in columns:
+    execute_non_query(
+        "ALTER TABLE employees ADD COLUMN joining_month TEXT DEFAULT 'July 2026';"
+    )
+  if "status" not in columns:
+    execute_non_query(
+        "ALTER TABLE employees ADD COLUMN status TEXT DEFAULT 'Active';"
+    )
+  if "leaving_month" not in columns:
+    execute_non_query(
+        "ALTER TABLE employees ADD COLUMN leaving_month TEXT DEFAULT '';"
+    )
+
 
 init_db()
 
-# Month mapping for chronological filtering
 MONTH_ORDER = {
-    "July 2026": 1,
-    "August 2026": 2,
-    "September 2026": 3,
-    "October 2026": 4,
-    "November 2026": 5,
-    "December 2026": 6,
+    "January 2026": 1,
+    "February 2026": 2,
+    "March 2026": 3,
+    "April 2026": 4,
+    "May 2026": 5,
+    "June 2026": 6,
+    "July 2026": 7,
+    "August 2026": 8,
+    "September 2026": 9,
+    "October 2026": 10,
+    "November 2026": 11,
+    "December 2026": 12,
 }
 
 
 def get_month_index(m_str):
-  return MONTH_ORDER.get(m_str, 1)
+  return MONTH_ORDER.get(m_str, 7)
 
 
-# Auto-migrate existing salary records into employees master if master is empty
+# Auto-migrate old salary data if employees master is empty
 def auto_migrate_employees():
   campuses = [
       "Kharadar",
@@ -158,8 +188,8 @@ if "authenticated" not in st.session_state:
 
 if not st.session_state.authenticated:
   st.markdown(
-      "<h1 style='text-align: center; color: #1E3A8A;'>🏫 EXCELLENCE"
-      " MODEL SCHOOL</h1>",
+      "<h1 style='text-align: center; color: #2C1654;'>🏫 EXCELLENCE MODEL"
+      " SCHOOL</h1>",
       unsafe_allow_html=True,
   )
   st.markdown(
@@ -181,30 +211,47 @@ if not st.session_state.authenticated:
       else:
         st.error("Invalid Password! Please try again.")
 else:
-  # Sidebar Navigation
-  st.sidebar.markdown("### 🏫 EMS Portals", unsafe_allow_html=True)
-  campuses = [
-      "Kharadar",
-      "Kharadar Extension",
-      "Tower Campus",
-      "Sony Campus",
-      "Park View",
-  ]
-  selected_campus = st.sidebar.selectbox("Select Campus", campuses)
+  # Sidebar Navigation with Logo
+  with st.sidebar:
+    try:
+      st.image("LOGO.png", width=80)
+    except Exception:
+      pass
+    st.markdown("### EXCELLENCE MODEL SCHOOL", unsafe_allow_html=True)
+    st.markdown(
+        "<p style='font-size:12px; color:#d1d5db;'>Enterprise Management"
+        " ERP</p>",
+        unsafe_allow_html=True,
+    )
+    st.markdown("---")
 
-  nav_mode = st.sidebar.radio(
-      "Navigation Menu",
-      ["Monthly Salary Sheet", "Staff Directory (Master & Increment)", "Summary"],
-  )
+    campuses = [
+        "Kharadar",
+        "Kharadar Extension",
+        "Tower Campus",
+        "Sony Campus",
+        "Park View",
+    ]
+    selected_campus = st.selectbox("Select Campus", campuses)
 
-  month_filter = st.sidebar.selectbox(
-      "Select Month", list(MONTH_ORDER.keys())
-  )
+    nav_mode = st.radio(
+        "Main Navigation",
+        [
+            "Monthly Salary Sheet",
+            "Staff Directory (Master & Increment)",
+            "Employee Yearly Ledger",
+            "Summary",
+        ],
+    )
 
-  st.sidebar.markdown("---")
-  if st.sidebar.button("🚪 Logout", use_container_width=True):
-    st.session_state.authenticated = False
-    st.rerun()
+    month_filter = st.selectbox(
+        "Select Month", list(MONTH_ORDER.keys()), index=6
+    )  # Default July 2026
+
+    st.markdown("---")
+    if st.button("🚪 Secure Logout", use_container_width=True):
+      st.session_state.authenticated = False
+      st.rerun()
 
   # 1. STAFF DIRECTORY / MASTER MANAGEMENT TAB
   if nav_mode == "Staff Directory (Master & Increment)":
@@ -219,7 +266,7 @@ else:
     )
 
     st.info(
-        "💡 Manage staff master records here. You can add new employees, set"
+        "Manage staff master records here. You can add new employees, set"
         " their joining month, apply yearly increments, or mark status as"
         " 'Left' for departing staff without breaking historical past salary"
         " records."
@@ -269,7 +316,7 @@ else:
         key=f"emp_master_{selected_campus}",
         column_config={
             "ID": None,
-            "JoiningMonth": st.column_config.SelectboxColumn(
+            "Joining Month": st.column_config.SelectboxColumn(
                 "Joining Month",
                 options=list(MONTH_ORDER.keys()),
                 required=True,
@@ -277,7 +324,7 @@ else:
             "Status": st.column_config.SelectboxColumn(
                 "Status", options=["Active", "Left"], required=True
             ),
-            "LeavingMonth": st.column_config.SelectboxColumn(
+            "Leaving Month": st.column_config.SelectboxColumn(
                 "Leaving Month",
                 options=[""] + list(MONTH_ORDER.keys()),
                 required=False,
@@ -342,20 +389,16 @@ else:
 
     current_m_idx = get_month_index(month_filter)
 
-    # Check if monthly records exist
     existing_rows = run_query(
         """
             SELECT id, reg_no, name, designation, basic_salary, absent_days, 
                    late_days, days_in_month, considered_red_days, reason 
-            FROM salaries WHERE campus = ? and month_year = ? ORDER BY id;
+            FROM salaries WHERE campus = ? AND month_year = ? ORDER BY id;
         """,
         (selected_campus, month_filter),
     )
 
     if not existing_rows:
-      # Filter master employees eligible for this month:
-      # 1. Joining month index <= current month index
-      # 2. Either Active OR (Left but leaving month index >= current month index)
       master_emps = run_query(
           """
                 SELECT reg_no, name, designation, basic_salary, increment, joining_month, status, leaving_month 
@@ -368,12 +411,11 @@ else:
         r_no, name, desig, b_sal, inc, j_month, status, l_month = emp
         j_idx = get_month_index(j_month)
 
-        # Check eligibility for current month filter
         if j_idx <= current_m_idx:
           if status == "Active" or (
               l_month and get_month_index(l_month) >= current_m_idx
           ):
-            effective_basic = b_sal + inc  # Basic + Yearly Increment
+            effective_basic = b_sal + inc
             execute_non_query(
                 """
                         INSERT INTO salaries (campus, reg_no, name, designation, basic_salary, absent_days, late_days, days_in_month, considered_red_days, reason, month_year)
@@ -422,7 +464,6 @@ else:
           df["Considered Red Days"]
       ).fillna(0)
 
-      # Calculations
       df["Per Day"] = df.apply(
           lambda row: row["Basic Salary"] / row["Days in Month"]
           if row["Days in Month"] > 0
@@ -555,7 +596,6 @@ else:
             use_container_width=True,
         )
 
-    # Branch Financial Summary Cards
     if existing_rows:
       st.markdown("### 📊 Branch Financial Summary")
       m1, m2, m3, m4 = st.columns(4)
@@ -574,7 +614,94 @@ else:
             "Total Final Payout", f"Rs. {df['Total Final Salary'].sum():,.2f}"
         )
 
-  # 3. NETWORK SUMMARY TAB
+  # 3. EMPLOYEE YEARLY LEDGER & CHARTS TAB
+  elif nav_mode == "Employee Yearly Ledger":
+    st.markdown(
+        "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"<div class='sub-header'>{selected_campus.upper()} BRANCH — Employee"
+        " Yearly Salary Ledger (Jan 2026 - Dec 2026)</div>",
+        unsafe_allow_html=True,
+    )
+
+    # Fetch unique employee names for dropdown
+    emp_names_raw = run_query(
+        "SELECT DISTINCT name FROM salaries WHERE campus = ? ORDER BY name;",
+        (selected_campus,),
+    )
+    emp_names = [r[0] for r in emp_names_raw if r[0]]
+
+    if emp_names:
+      selected_employee = st.selectbox(
+          "Select Employee for Yearly Ledger", emp_names
+      )
+
+      # Fetch all months data for this employee
+      yearly_rows = run_query(
+          """
+                SELECT month_year, basic_salary, absent_days, late_days, days_in_month, 
+                       considered_red_days, reason 
+                FROM salaries WHERE campus = ? AND name = ?;
+            """,
+          (selected_campus, selected_employee),
+      )
+
+      if yearly_rows:
+        y_data = []
+        for yr in yearly_rows:
+          m_yr, b_sal, abs_d, late_d, dim, cred_d, reason = yr
+          per_day = b_sal / dim if dim > 0 else 0
+          auto_ded_late = late_d / 3.0
+          net_units = max(0, (abs_d + auto_ded_late) - cred_d)
+          tot_ded = net_units * per_day
+          p_one = 1 if abs_d == 0 and late_d == 0 else 0
+          final_pay = b_sal - tot_ded + (p_one * per_day)
+
+          y_data.append({
+              "Month": m_yr,
+              "Month Index": get_month_index(m_yr),
+              "Basic Salary": b_sal,
+              "Absent Days": abs_d,
+              "Late Days": late_d,
+              "Total Deduction": tot_ded,
+              "Final Payout": final_pay,
+          })
+
+        y_df = pd.DataFrame(y_data)
+        y_df = y_df.sort_values("Month Index").drop(columns=["Month Index"])
+
+        st.markdown(
+            f"#### Yearly Financial Record for: **{selected_employee}**"
+        )
+        st.dataframe(y_df, use_container_width=True)
+
+        # Charts Section
+        st.markdown("#### 📈 Yearly Salary & Deduction Trend")
+        chart_df = y_df.set_index("Month")[["Basic Salary", "Final Payout"]]
+        st.line_chart(chart_df)
+
+        chart_ded = y_df.set_index("Month")[["Total Deduction"]]
+        st.bar_chart(chart_ded)
+
+        csv_emp = y_df.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label=f"📥 Download {selected_employee} Yearly Report (CSV)",
+            data=csv_emp,
+            file_name=f"{selected_employee}_Yearly_Ledger_2026.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+      else:
+        st.info("No salary records found for this employee.")
+    else:
+      st.info(
+          "No employee records available for this campus yet. Please save"
+          " monthly salary sheets first."
+      )
+
+  # 4. NETWORK SUMMARY TAB
   elif nav_mode == "Summary":
     st.markdown(
         "<div style='text-align: center;'><span"
