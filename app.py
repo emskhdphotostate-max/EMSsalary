@@ -63,27 +63,38 @@ def execute_non_query(query, params=None):
   conn.commit()
 
 
-# Initialize Database Table
+# Initialize Database Tables (Employees Master + Monthly Salaries)
 def init_db():
-  query = """
-    CREATE TABLE IF NOT EXISTS salaries (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        campus TEXT,
-        reg_no TEXT,
-        name TEXT,
-        designation TEXT,
-        basic_salary REAL DEFAULT 0,
-        absent_days REAL DEFAULT 0,
-        late_days REAL DEFAULT 0,
-        deduction_late REAL DEFAULT 0,
-        days_in_month REAL DEFAULT 30,
-        considered_red_days REAL DEFAULT 0,
-        plus_one REAL DEFAULT 0,
-        reason TEXT,
-        month_year TEXT
-    );
-    """
-  execute_non_query(query)
+  # Master Employees Table
+  execute_non_query("""
+        CREATE TABLE IF NOT EXISTS employees (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            campus TEXT,
+            reg_no TEXT,
+            name TEXT,
+            designation TEXT,
+            basic_salary REAL DEFAULT 0,
+            increment REAL DEFAULT 0
+        );
+    """)
+
+  # Monthly Attendance & Salary Records Table
+  execute_non_query("""
+        CREATE TABLE IF NOT EXISTS salaries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            campus TEXT,
+            reg_no TEXT,
+            name TEXT,
+            designation TEXT,
+            basic_salary REAL DEFAULT 0,
+            absent_days REAL DEFAULT 0,
+            late_days REAL DEFAULT 0,
+            days_in_month REAL DEFAULT 30,
+            considered_red_days REAL DEFAULT 0,
+            reason TEXT,
+            month_year TEXT
+        );
+    """)
 
 
 init_db()
@@ -117,7 +128,7 @@ if not st.session_state.authenticated:
       else:
         st.error("Invalid Password! Please try again.")
 else:
-  # Sidebar Navigation for Campuses and Summary Tab
+  # Sidebar Navigation
   st.sidebar.markdown("### 🏫 EMS Portals", unsafe_allow_html=True)
   campuses = [
       "Kharadar",
@@ -125,9 +136,13 @@ else:
       "Tower Campus",
       "Sony Campus",
       "Park View",
-      "Summary",
   ]
-  selected_tab = st.sidebar.selectbox("Select Campus / Tab", campuses)
+  selected_campus = st.sidebar.selectbox("Select Campus", campuses)
+
+  nav_mode = st.sidebar.radio(
+      "Navigation Menu",
+      ["Monthly Salary Sheet", "Staff Directory (Master & Increment)", "Summary"],
+  )
 
   month_filter = st.sidebar.selectbox(
       "Select Month",
@@ -146,7 +161,96 @@ else:
     st.session_state.authenticated = False
     st.rerun()
 
-  if selected_tab != "Summary":
+  # 1. STAFF DIRECTORY / MASTER MANAGEMENT TAB
+  if nav_mode == "Staff Directory (Master & Increment)":
+    st.markdown(
+        "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"<div class='sub-header'>{selected_campus.upper()} BRANCH — Staff"
+        " Directory & Increments</div>",
+        unsafe_allow_html=True,
+    )
+
+    st.info(
+        "💡 Yahan aap naye employees add kar sakte hain, yearly increments"
+        " update kar sakte hain, ya jo staff chodh gaya hai usay remove kar"
+        " sakte hain."
+    )
+
+    emp_rows = run_query(
+        "SELECT id, reg_no, name, designation, basic_salary, increment FROM"
+        " employees WHERE campus = ? ORDER BY id;",
+        (selected_campus,),
+    )
+
+    if emp_rows:
+      emp_df = pd.DataFrame(
+          emp_rows,
+          columns=[
+              "ID",
+              "Reg No",
+              "Name",
+              "Designation",
+              "Basic Salary",
+              "Yearly Increment",
+          ],
+      )
+    else:
+      emp_df = pd.DataFrame(
+          columns=[
+              "ID",
+              "Reg No",
+              "Name",
+              "Designation",
+              "Basic Salary",
+              "Yearly Increment",
+          ]
+      )
+
+    edited_emp_df = st.data_editor(
+        emp_df,
+        num_rows="dynamic",
+        key=f"emp_master_{selected_campus}",
+        column_config={
+            "ID": None  # Hide internal ID column
+        },
+    )
+
+    if st.button("💾 Save Staff Directory Changes", use_container_width=True):
+      execute_non_query(
+          "DELETE FROM employees WHERE campus = ?;", (selected_campus,)
+      )
+      for idx, row in edited_emp_df.iterrows():
+        if pd.isna(row["Name"]) or str(row["Name"]).strip() == "":
+          continue
+        execute_non_query(
+            """
+                    INSERT INTO employees (campus, reg_no, name, designation, basic_salary, increment)
+                    VALUES (?, ?, ?, ?, ?, ?);
+                """,
+            (
+                selected_campus,
+                str(row["Reg No"]) if pd.notna(row["Reg No"]) else "",
+                str(row["Name"]),
+                str(row["Designation"]) if pd.notna(row["Designation"]) else "",
+                float(row["Basic Salary"])
+                if pd.notna(row["Basic Salary"])
+                else 0,
+                float(row["Yearly Increment"])
+                if pd.notna(row["Yearly Increment"])
+                else 0,
+            ),
+        )
+      st.success(
+          "✅ Staff Master Directory updated successfully! Increments and"
+          " removals saved."
+      )
+      st.rerun()
+
+  # 2. MONTHLY SALARY SHEET TAB
+  elif nav_mode == "Monthly Salary Sheet":
     st.markdown(
         "<div style='text-align: center;'><span"
         " style='font-size:32px;'>🎓</span></div>",
@@ -157,22 +261,52 @@ else:
         unsafe_allow_html=True,
     )
     st.markdown(
-        f"<div class='sub-header'>{selected_tab.upper()} BRANCH — Salary Sheet"
+        f"<div class='sub-header'>{selected_campus.upper()} BRANCH — Salary Sheet"
         f" ({month_filter})</div>",
         unsafe_allow_html=True,
     )
 
-    # Fetch Data from Database
-    query = """
-            SELECT id, reg_no, name, designation, basic_salary, absent_days, late_days, 
-                   deduction_late, days_in_month, considered_red_days, plus_one, reason 
-            FROM salaries WHERE campus = ? AND month_year = ? ORDER BY id;
+    # Check if monthly records exist; if not, pull active employees from Master Directory
+    existing_rows = run_query(
         """
-    rows = run_query(query, (selected_tab, month_filter))
+            SELECT id, reg_no, name, designation, basic_salary, absent_days, 
+                   late_days, days_in_month, considered_red_days, reason 
+            FROM salaries WHERE campus = ? AND month_year = ? ORDER BY id;
+        """,
+        (selected_campus, month_filter),
+    )
 
-    if rows:
+    if not existing_rows:
+      # Pull from master employees and apply increments to basic salary
+      master_emps = run_query(
+          """
+                SELECT reg_no, name, designation, basic_salary, increment 
+                FROM employees WHERE campus = ?;
+            """,
+          (selected_campus,),
+      )
+      for emp in master_emps:
+        r_no, name, desig, b_sal, inc = emp
+        effective_basic = b_sal + inc  # Basic + Yearly Increment
+        execute_non_query(
+            """
+                INSERT INTO salaries (campus, reg_no, name, designation, basic_salary, absent_days, late_days, days_in_month, considered_red_days, reason, month_year)
+                VALUES (?, ?, ?, ?, ?, 0, 0, 30, 0, '', ?);
+            """,
+            (selected_campus, r_no, name, desig, effective_basic, month_filter),
+        )
+      existing_rows = run_query(
+          """
+            SELECT id, reg_no, name, designation, basic_salary, absent_days, 
+                   late_days, days_in_month, considered_red_days, reason 
+            FROM salaries WHERE campus = ? AND month_year = ? ORDER BY id;
+        """,
+          (selected_campus, month_filter),
+      )
+
+    if existing_rows:
       df = pd.DataFrame(
-          rows,
+          existing_rows,
           columns=[
               "ID",
               "Reg No",
@@ -181,10 +315,8 @@ else:
               "Basic Salary",
               "Absent Days",
               "Late Days",
-              "Deduction Late",
               "Days in Month",
               "Considered Red Days",
-              "Plus 1",
               "Reason of Pending",
           ],
       )
@@ -196,38 +328,28 @@ else:
           df["Considered Red Days"]
       ).fillna(0)
 
-      # Per Day Calculation
+      # Calculations
       df["Per Day"] = df.apply(
           lambda row: row["Basic Salary"] / row["Days in Month"]
           if row["Days in Month"] > 0
           else 0,
           axis=1,
       )
-
-      # AUTOMATIC LATE DEDUCTION RULE: 3 Late Days = 1 Deduction Unit
       df["Deduction Late"] = df["Late Days"] / 3.0
-
-      # Total Deduction Pool = Absent Days + Late Deduction Units
       df["Total Absent/Late Units"] = df["Absent Days"] + df["Deduction Late"]
-
-      # Net Deduction Units after subtracting Considered Red Days (cannot be less than 0)
       df["Net Deduction Units"] = df.apply(
           lambda row: max(
               0, row["Total Absent/Late Units"] - row["Considered Red Days"]
           ),
           axis=1,
       )
-
       df["Total Deduction Amount"] = df["Net Deduction Units"] * df["Per Day"]
 
-      # AUTOMATIC PLUS 1 RULE: If 0 Absent Days and 0 Late Days, Plus 1 becomes 1 automatically
       df["Plus 1"] = df.apply(
           lambda row: 1 if row["Absent Days"] == 0 and row["Late Days"] == 0 else 0,
           axis=1,
       )
-
-      # Final Salary Calculation
-      df["Final Salary"] = (
+      df["Total Final Salary"] = (
           df["Basic Salary"]
           - df["Total Deduction Amount"]
           + (df["Plus 1"] * df["Per Day"])
@@ -247,7 +369,7 @@ else:
               "Considered Red Days",
               "Total Deduction Amount",
               "Plus 1",
-              "Final Salary",
+              "Total Final Salary",
               "Reason of Pending",
           ]
       ]
@@ -262,42 +384,45 @@ else:
               "Late Days",
               "Deduction Late",
               "Days in Month",
+              "Per Day",
               "Considered Red Days",
+              "Total Deduction Amount",
               "Plus 1",
+              "Total Final Salary",
               "Reason of Pending",
           ]
       )
 
-    edited_df = st.data_editor(display_df, num_rows="dynamic", key=selected_tab)
+    edited_df = st.data_editor(
+        display_df,
+        num_rows="fixed",
+        key=f"salary_sheet_{selected_campus}_{month_filter}",
+        column_config={
+            "Basic Salary": st.column_config.NumberColumn(
+                "Basic Salary", help="Editable for salary adjustments/increments"
+            )
+        },
+    )
 
     col_save, col_dl = st.columns([1, 1])
     with col_save:
       if st.button("💾 Save Changes to Database", use_container_width=True):
-        delete_query = (
-            "DELETE FROM salaries WHERE campus = ? AND month_year = ?;"
+        execute_non_query(
+            "DELETE FROM salaries WHERE campus = ? AND month_year = ?;",
+            (selected_campus, month_filter),
         )
-        execute_non_query(delete_query, (selected_tab, month_filter))
 
         for idx, row in edited_df.iterrows():
           if pd.isna(row["Name"]) or str(row["Name"]).strip() == "":
             continue
-
-          # Re-calculate Plus 1 for saving to database based on editor values
-          abs_val = (
-              float(row["Absent Days"]) if pd.notna(row["Absent Days"]) else 0
-          )
-          late_val = float(row["Late Days"]) if pd.notna(row["Late Days"]) else 0
-          p_one_val = 1 if abs_val == 0 and late_val == 0 else 0
-
-          insert_query = """
-                        INSERT INTO salaries (campus, reg_no, name, designation, basic_salary, absent_days, 
-                                              late_days, deduction_late, days_in_month, considered_red_days, plus_one, reason, month_year)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-                    """
           execute_non_query(
-              insert_query,
+              """
+                        INSERT INTO salaries (campus, reg_no, name, designation, basic_salary, absent_days, 
+                                              late_days, days_in_month, considered_red_days, reason, month_year)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                    """,
               (
-                  selected_tab,
+                  selected_campus,
                   str(row["Reg No"]) if pd.notna(row["Reg No"]) else "",
                   str(row["Name"]),
                   str(row["Designation"])
@@ -306,42 +431,38 @@ else:
                   float(row["Basic Salary"])
                   if pd.notna(row["Basic Salary"])
                   else 0,
-                  abs_val,
-                  late_val,
-                  float(row["Deduction Late"])
-                  if pd.notna(row["Deduction Late"])
+                  float(row["Absent Days"])
+                  if pd.notna(row["Absent Days"])
                   else 0,
+                  float(row["Late Days"]) if pd.notna(row["Late Days"]) else 0,
                   float(row["Days in Month"])
                   if pd.notna(row["Days in Month"])
                   else 30,
                   float(row["Considered Red Days"])
                   if pd.notna(row["Considered Red Days"])
                   else 0,
-                  p_one_val,
                   str(row["Reason of Pending"])
                   if pd.notna(row["Reason of Pending"])
                   else "",
                   month_filter,
               ),
           )
-        st.success(
-            "✅ Records and automatic Plus 1 attendance bonus updated!"
-        )
+        st.success("✅ Monthly salary sheet saved successfully!")
         st.rerun()
 
     with col_dl:
-      if rows:
+      if existing_rows:
         csv = display_df.to_csv(index=False).encode("utf-8")
         st.download_button(
             label="📥 Download CSV / Excel Report",
             data=csv,
-            file_name=f"{selected_tab}_Salary_{month_filter}.csv",
+            file_name=f"{selected_campus}_Salary_{month_filter}.csv",
             mime="text/csv",
             use_container_width=True,
         )
 
-    # Campus Totals Summary Cards
-    if rows:
+    # Branch Financial Summary Cards
+    if existing_rows:
       st.markdown("### 📊 Branch Financial Summary")
       m1, m2, m3, m4 = st.columns(4)
       with m1:
@@ -355,10 +476,12 @@ else:
             "Total Deductions", f"Rs. {df['Total Deduction Amount'].sum():,.2f}"
         )
       with m4:
-        st.metric("Total Final Payout", f"Rs. {df['Final Salary'].sum():,.2f}")
+        st.metric(
+            "Total Final Payout", f"Rs. {df['Total Final Salary'].sum():,.2f}"
+        )
 
-  else:
-    # CONSOLIDATED SUMMARY TAB (All Campuses)
+  # 3. NETWORK SUMMARY TAB
+  elif nav_mode == "Summary":
     st.markdown(
         "<div style='text-align: center;'><span"
         " style='font-size:32px;'>📈</span></div>",
@@ -381,7 +504,7 @@ else:
     summary_data = run_query(sum_query, (month_filter,))
 
     all_q = """
-            SELECT basic_salary, absent_days, late_days, deduction_late, days_in_month, considered_red_days, plus_one 
+            SELECT basic_salary, absent_days, late_days, days_in_month, considered_red_days 
             FROM salaries WHERE month_year = ?;
         """
     all_rows = run_query(all_q, (month_filter,))
@@ -393,7 +516,7 @@ else:
       tot_deductions = 0
       tot_final = 0
       for r in all_rows:
-        b_sal, abs_d, late_d, ded_l, dim, cred_d, p_one = r
+        b_sal, abs_d, late_d, dim, cred_d = r
         per_day = b_sal / dim if dim > 0 else 0
         auto_ded_late = late_d / 3.0
         total_units = abs_d + auto_ded_late
@@ -429,7 +552,7 @@ else:
           data=sum_csv,
           file_name=f"EMS_Consolidated_Summary_{month_filter}.csv",
           mime="text/csv",
-          use_container_width=True,
+          use_count_width=True,
       )
     else:
       st.info(
