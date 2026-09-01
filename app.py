@@ -27,7 +27,6 @@ st.markdown(
     [data-testid="stSidebar"] div {
         color: #ffffff !important;
     }
-    /* 3D Modern Logout Button Style */
     [data-testid="stSidebar"] button {
         color: #ffffff !important;
         background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%) !important;
@@ -56,6 +55,15 @@ st.markdown(
         text-align: center;
         margin-bottom: 20px;
         font-weight: 500;
+    }
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2C1654;
+        margin-top: 25px;
+        margin-bottom: 10px;
+        border-bottom: 2px solid #2C1654;
+        padding-bottom: 4px;
     }
     </style>
     """,
@@ -93,13 +101,19 @@ def execute_non_query(query, params=None):
   conn.commit()
 
 
-# Automatically next ID generate karne ka function
+# Automatically next ID generate karne ka function with correct Campus Prefixes
 def get_next_employee_id(selected_campus):
   conn = init_connection()
   cursor = conn.cursor()
 
   if "Extension" in selected_campus:
     prefix = "KH EXT-"
+  elif "Tower" in selected_campus:
+    prefix = "TW-"
+  elif "Sony" in selected_campus:
+    prefix = "SONY-"
+  elif "Park View" in selected_campus:
+    prefix = "PV-"
   else:
     prefix = "KH-"
 
@@ -139,6 +153,7 @@ def init_db():
             name TEXT,
             father_name TEXT,
             designation TEXT,
+            staff_category TEXT DEFAULT 'Teaching Staff',
             basic_salary REAL DEFAULT 0,
             increment REAL DEFAULT 0,
             joining_month TEXT DEFAULT 'July 2026',
@@ -154,6 +169,7 @@ def init_db():
             reg_no TEXT,
             name TEXT,
             designation TEXT,
+            staff_category TEXT DEFAULT 'Teaching Staff',
             basic_salary REAL DEFAULT 0,
             absent_days REAL DEFAULT 0,
             late_days REAL DEFAULT 0,
@@ -166,22 +182,23 @@ def init_db():
 
   cursor = init_connection().cursor()
   cursor.execute("PRAGMA table_info(employees);")
-  columns = [col[1] for col in cursor.fetchall()]
-  if "joining_month" not in columns:
+  emp_columns = [col[1] for col in cursor.fetchall()]
+  if "staff_category" not in emp_columns:
     execute_non_query(
-        "ALTER TABLE employees ADD COLUMN joining_month TEXT DEFAULT 'July 2026';"
+        "ALTER TABLE employees ADD COLUMN staff_category TEXT DEFAULT 'Teaching"
+        " Staff';"
     )
-  if "status" not in columns:
-    execute_non_query(
-        "ALTER TABLE employees ADD COLUMN status TEXT DEFAULT 'Active';"
-    )
-  if "leaving_month" not in columns:
-    execute_non_query(
-        "ALTER TABLE employees ADD COLUMN leaving_month TEXT DEFAULT '';"
-    )
-  if "father_name" not in columns:
+  if "father_name" not in emp_columns:
     execute_non_query(
         "ALTER TABLE employees ADD COLUMN father_name TEXT DEFAULT '';"
+    )
+
+  cursor.execute("PRAGMA table_info(salaries);")
+  sal_columns = [col[1] for col in cursor.fetchall()]
+  if "staff_category" not in sal_columns:
+    execute_non_query(
+        "ALTER TABLE salaries ADD COLUMN staff_category TEXT DEFAULT 'Teaching"
+        " Staff';"
     )
 
 
@@ -206,40 +223,6 @@ MONTH_ORDER = {
 def get_month_index(m_str):
   return MONTH_ORDER.get(m_str, 7)
 
-
-def auto_migrate_employees():
-  campuses = [
-      "Kharadar",
-      "Kharadar Extension",
-      "Tower Campus",
-      "Sony Campus",
-      "Park View",
-  ]
-  for camp in campuses:
-    count = run_query(
-        "SELECT COUNT(*) FROM employees WHERE campus = ?;", (camp,)
-    )
-    if count and count[0][0] == 0:
-      old_emps = run_query(
-          """
-                SELECT DISTINCT reg_no, name, designation, basic_salary 
-                FROM salaries WHERE campus = ?;
-            """,
-          (camp,),
-      )
-      for emp in old_emps:
-        r_no, name, desig, b_sal = emp
-        if name:
-          execute_non_query(
-              """
-                    INSERT INTO employees (campus, reg_no, name, father_name, designation, basic_salary, increment, joining_month, status, leaving_month)
-                    VALUES (?, ?, ?, '', ?, ?, 0, 'July 2026', 'Active', '');
-                """,
-              (camp, r_no, name, desig, b_sal),
-          )
-
-
-auto_migrate_employees()
 
 # Authentication State Check
 if "authenticated" not in st.session_state:
@@ -375,9 +358,7 @@ else:
           ].index(selected_campus),
       )
 
-      # Automatically generate next ID based on selected campus
       auto_generated_id = get_next_employee_id(new_campus)
-
       new_reg_no = st.text_input(
           "Registration / Employee ID", value=auto_generated_id
       )
@@ -385,7 +366,10 @@ else:
       new_father_name = st.text_input("Father's Name")
 
     with col2:
-      new_designation = st.text_input("Designation (e.g. Teacher, Clerk)")
+      new_staff_category = st.selectbox(
+          "Staff Category", ["Admin Staff", "Teaching Staff", "Non-Teaching Staff"]
+      )
+      new_designation = st.text_input("Designation (e.g. Teacher, Clerk, Maid)")
       new_basic_salary = st.number_input(
           "Basic Salary (Rs.)", min_value=0.0, step=1000.0, value=25000.0
       )
@@ -419,8 +403,8 @@ else:
         else:
           execute_non_query(
               """
-                    INSERT INTO employees (campus, reg_no, name, father_name, designation, basic_salary, increment, joining_month, status, leaving_month)
-                    VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, '');
+                    INSERT INTO employees (campus, reg_no, name, father_name, designation, staff_category, basic_salary, increment, joining_month, status, leaving_month)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, '');
                 """,
               (
                   new_campus,
@@ -428,15 +412,16 @@ else:
                   new_name,
                   new_father_name,
                   new_designation,
+                  new_staff_category,
                   new_basic_salary,
                   new_joining_month,
                   new_status,
               ),
           )
           st.success(
-              f"✅ Successfully registered {new_name} ({new_designation}) with ID"
-              f" {new_reg_no} for {new_campus} campus starting from"
-              f" {new_joining_month}!"
+              f"✅ Successfully registered {new_name} ({new_designation} -"
+              f" {new_staff_category}) with ID {new_reg_no} for"
+              f" {new_campus}!"
           )
           st.balloons()
 
@@ -454,8 +439,8 @@ else:
 
     emp_rows = run_query(
         """
-            SELECT id, reg_no, name, father_name, designation, basic_salary, increment, joining_month, status, leaving_month 
-            FROM employees WHERE campus = ? ORDER BY id;
+            SELECT id, reg_no, name, father_name, designation, staff_category, basic_salary, increment, joining_month, status, leaving_month 
+            FROM employees WHERE campus = ? ORDER BY staff_category, id;
         """,
         (selected_campus,),
     )
@@ -469,6 +454,7 @@ else:
               "Name",
               "Father's Name",
               "Designation",
+              "Staff Category",
               "Basic Salary",
               "Yearly Increment",
               "Joining Month",
@@ -484,6 +470,7 @@ else:
               "Name",
               "Father's Name",
               "Designation",
+              "Staff Category",
               "Basic Salary",
               "Yearly Increment",
               "Joining Month",
@@ -498,6 +485,15 @@ else:
         key=f"emp_master_{selected_campus}",
         column_config={
             "ID": None,
+            "Staff Category": st.column_config.SelectboxColumn(
+                "Staff Category",
+                options=[
+                    "Admin Staff",
+                    "Teaching Staff",
+                    "Non-Teaching Staff",
+                ],
+                required=True,
+            ),
             "Joining Month": st.column_config.SelectboxColumn(
                 "Joining Month",
                 options=list(MONTH_ORDER.keys()),
@@ -523,8 +519,8 @@ else:
           continue
         execute_non_query(
             """
-                    INSERT INTO employees (campus, reg_no, name, father_name, designation, basic_salary, increment, joining_month, status, leaving_month)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                    INSERT INTO employees (campus, reg_no, name, father_name, designation, staff_category, basic_salary, increment, joining_month, status, leaving_month)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """,
             (
                 selected_campus,
@@ -534,6 +530,9 @@ else:
                 if pd.notna(row["Father's Name"])
                 else "",
                 str(row["Designation"]) if pd.notna(row["Designation"]) else "",
+                str(row["Staff Category"])
+                if pd.notna(row["Staff Category"])
+                else "Teaching Staff",
                 float(row["Basic Salary"])
                 if pd.notna(row["Basic Salary"])
                 else 0,
@@ -568,9 +567,9 @@ else:
 
     existing_rows = run_query(
         """
-            SELECT id, reg_no, name, designation, basic_salary, absent_days, 
+            SELECT id, reg_no, name, designation, staff_category, basic_salary, absent_days, 
                    late_days, days_in_month, considered_red_days, reason 
-            FROM salaries WHERE campus = ? AND month_year = ? ORDER BY id;
+            FROM salaries WHERE campus = ? AND month_year = ? ORDER BY staff_category, id;
         """,
         (selected_campus, month_filter),
     )
@@ -578,14 +577,14 @@ else:
     if not existing_rows:
       master_emps = run_query(
           """
-                SELECT reg_no, name, designation, basic_salary, increment, joining_month, status, leaving_month 
+                SELECT reg_no, name, designation, staff_category, basic_salary, increment, joining_month, status, leaving_month 
                 FROM employees WHERE campus = ?;
             """,
           (selected_campus,),
       )
 
       for emp in master_emps:
-        r_no, name, desig, b_sal, inc, j_month, status, l_month = emp
+        r_no, name, desig, s_cat, b_sal, inc, j_month, status, l_month = emp
         j_idx = get_month_index(j_month)
 
         is_eligible = False
@@ -601,14 +600,15 @@ else:
           effective_basic = b_sal + inc
           execute_non_query(
               """
-                        INSERT INTO salaries (campus, reg_no, name, designation, basic_salary, absent_days, late_days, days_in_month, considered_red_days, reason, month_year)
-                        VALUES (?, ?, ?, ?, ?, 0, 0, 30, 0, '', ?);
+                        INSERT INTO salaries (campus, reg_no, name, designation, staff_category, basic_salary, absent_days, late_days, days_in_month, considered_red_days, reason, month_year)
+                        VALUES (?, ?, ?, ?, ?, ?, 0, 0, 30, 0, '', ?);
                     """,
               (
                   selected_campus,
                   r_no,
                   name,
                   desig,
+                  s_cat if s_cat else "Teaching Staff",
                   effective_basic,
                   month_filter,
               ),
@@ -616,9 +616,9 @@ else:
 
       existing_rows = run_query(
           """
-            SELECT id, reg_no, name, designation, basic_salary, absent_days, 
+            SELECT id, reg_no, name, designation, staff_category, basic_salary, absent_days, 
                    late_days, days_in_month, considered_red_days, reason 
-            FROM salaries WHERE campus = ? AND month_year = ? ORDER BY id;
+            FROM salaries WHERE campus = ? AND month_year = ? ORDER BY staff_category, id;
         """,
           (selected_campus, month_filter),
       )
@@ -631,6 +631,7 @@ else:
               "Reg No",
               "Name",
               "Designation",
+              "Staff Category",
               "Basic Salary",
               "Absent Days",
               "Late Days",
@@ -673,8 +674,9 @@ else:
           + (df["Plus 1"] * df["Per Day"])
       )
 
-      display_df = df[
+      full_display_df = df[
           [
+              "Staff Category",
               "Reg No",
               "Name",
               "Designation",
@@ -692,8 +694,9 @@ else:
           ]
       ]
     else:
-      display_df = pd.DataFrame(
+      full_display_df = pd.DataFrame(
           columns=[
+              "Staff Category",
               "Reg No",
               "Name",
               "Designation",
@@ -711,11 +714,59 @@ else:
           ]
       )
 
-    edited_df = st.data_editor(
-        display_df,
-        num_rows="fixed",
-        key=f"salary_sheet_{selected_campus}_{month_filter}",
-    )
+    categories = ["Admin Staff", "Teaching Staff", "Non-Teaching Staff"]
+    cat_dfs = {}
+
+    for cat in categories:
+      st.markdown(
+          f"<div class='section-title'>📌 {cat.upper()} PORTION</div>",
+          unsafe_allow_html=True,
+      )
+
+      cat_subset = full_display_df[full_display_df["Staff Category"] == cat]
+      work_df = cat_subset.drop(columns=["Staff Category"])
+
+      edited_cat_df = st.data_editor(
+          work_df,
+          num_rows="fixed",
+          key=f"salary_sheet_{selected_campus}_{month_filter}_{cat}",
+      )
+
+      # Subtotals for this category
+      if not edited_cat_df.empty:
+        sub_basic = edited_cat_df["Basic Salary"].sum()
+        sub_ded = edited_cat_df["Total Deduction Amount"].sum()
+        sub_final = edited_cat_df["Total Final Salary"].sum()
+
+        st.markdown(
+            f"""
+            <div style="background-color: #f3f4f6; padding: 10px 15px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; display: flex; justify-content: space-between; border-left: 5px solid #2C1654;">
+                <span>Total {cat}:</span>
+                <span>Basic: Rs. {sub_basic:,.2f} | Deductions: Rs. {sub_ded:,.2f} | <span style="color: green;">Final Payout: Rs. {sub_final:,.2f}</span></span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+      # Store back with category for saving
+      edited_cat_df["Staff Category"] = cat
+      cat_dfs[cat] = edited_cat_df
+
+    # Grand Total across all sections
+    all_edited_combined = pd.concat(cat_dfs.values(), ignore_index=True)
+    if not all_edited_combined.empty:
+      grand_basic = all_edited_combined["Basic Salary"].sum()
+      grand_ded = all_edited_combined["Total Deduction Amount"].sum()
+      grand_final = all_edited_combined["Total Final Salary"].sum()
+
+      st.markdown(
+          f"""
+          <div style="background: linear-gradient(135deg, #2C1654 0%, #4338ca 100%); color: white; padding: 15px 20px; border-radius: 8px; font-weight: bold; font-size: 16px; margin-top: 15px; margin-bottom: 25px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+              🏆 GRAND TOTAL ({selected_campus.upper()} BRANCH) — Basic: Rs. {grand_basic:,.2f} | Deductions: Rs. {grand_ded:,.2f} | Final Payout: Rs. {grand_final:,.2f}
+          </div>
+          """,
+          unsafe_allow_html=True,
+      )
 
     col_save, col_dl, col_pdf = st.columns([1, 1, 1])
     with col_save:
@@ -725,14 +776,14 @@ else:
             (selected_campus, month_filter),
         )
 
-        for idx, row in edited_df.iterrows():
+        for idx, row in all_edited_combined.iterrows():
           if pd.isna(row["Name"]) or str(row["Name"]).strip() == "":
             continue
           execute_non_query(
               """
-                        INSERT INTO salaries (campus, reg_no, name, designation, basic_salary, absent_days, 
+                        INSERT INTO salaries (campus, reg_no, name, designation, staff_category, basic_salary, absent_days, 
                                               late_days, days_in_month, considered_red_days, reason, month_year)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                     """,
               (
                   selected_campus,
@@ -741,6 +792,9 @@ else:
                   str(row["Designation"])
                   if pd.notna(row["Designation"])
                   else "",
+                  str(row["Staff Category"])
+                  if pd.notna(row["Staff Category"])
+                  else "Teaching Staff",
                   float(row["Basic Salary"])
                   if pd.notna(row["Basic Salary"])
                   else 0,
@@ -765,7 +819,7 @@ else:
 
     with col_dl:
       if existing_rows:
-        csv = display_df.to_csv(index=False).encode("utf-8")
+        csv = all_edited_combined.to_csv(index=False).encode("utf-8")
         st.download_button(
             label="📥 Download CSV Report",
             data=csv,
@@ -798,39 +852,56 @@ else:
         )
         pdf.ln(5)
 
-        pdf.set_font("Arial", "B", 8)
-        cols = [
-            "Reg No",
-            "Name",
-            "Designation",
-            "Basic",
-            "Absent",
-            "Late",
-            "Days",
-            "Per Day",
-            "Deduction",
-            "Final Pay",
-        ]
-        widths = [20, 45, 40, 22, 18, 18, 18, 22, 25, 25]
-        for i, col in enumerate(cols):
-          pdf.cell(widths[i], 7, col, 1, 0, "C")
-        pdf.ln()
+        for cat in categories:
+          cat_data = all_edited_combined[
+              all_edited_combined["Staff Category"] == cat
+          ]
+          if cat_data.empty:
+            continue
 
-        pdf.set_font("Arial", "", 8)
-        for idx, row in display_df.iterrows():
-          pdf.cell(widths[0], 6, str(row["Reg No"]), 1, 0, "C")  # type: ignore
-          pdf.cell(widths[1], 6, str(row["Name"])[:25], 1, 0, "L")  # type: ignore
-          pdf.cell(widths[2], 6, str(row["Designation"])[:22], 1, 0, "L")  # type: ignore
-          pdf.cell(widths[3], 6, f"{row['Basic Salary']:,.0f}", 1, 0, "R")  # type: ignore
-          pdf.cell(widths[4], 6, str(row["Absent Days"]), 1, 0, "C")  # type: ignore
-          pdf.cell(widths[5], 6, str(row["Late Days"]), 1, 0, "C")  # type: ignore
-          pdf.cell(widths[6], 6, str(row["Days in Month"]), 1, 0, "C")  # type: ignore
-          pdf.cell(widths[7], 6, f"{row['Per Day']:,.1f}", 1, 0, "R")  # type: ignore
-          pdf.cell(
-              widths[8], 6, f"{row['Total Deduction Amount']:,.1f}", 1, 0, "R"
-          )  # type: ignore
-          pdf.cell(widths[9], 6, f"{row['Total Final Salary']:,.1f}", 1, 0, "R")  # type: ignore
+          pdf.set_font("Arial", "B", 11)
+          pdf.cell(0, 7, f"{cat.upper()} PORTION", 0, 1, "L")
+
+          pdf.set_font("Arial", "B", 8)
+          cols = [
+              "Reg No",
+              "Name",
+              "Designation",
+              "Basic",
+              "Absent",
+              "Late",
+              "Days",
+              "Per Day",
+              "Deduction",
+              "Final Pay",
+          ]
+          widths = [20, 45, 40, 22, 18, 18, 18, 22, 25, 25]
+          for i, col in enumerate(cols):
+            pdf.cell(widths[i], 7, col, 1, 0, "C")
           pdf.ln()
+
+          pdf.set_font("Arial", "", 8)
+          for idx, row in cat_data.iterrows():
+            pdf.cell(widths[0], 6, str(row["Reg No"]), 1, 0, "C")  # type: ignore
+            pdf.cell(widths[1], 6, str(row["Name"])[:25], 1, 0, "L")  # type: ignore
+            pdf.cell(widths[2], 6, str(row["Designation"])[:22], 1, 0, "L")  # type: ignore
+            pdf.cell(widths[3], 6, f"{row['Basic Salary']:,.0f}", 1, 0, "R")  # type: ignore
+            pdf.cell(widths[4], 6, str(row["Absent Days"]), 1, 0, "C")  # type: ignore
+            pdf.cell(widths[5], 6, str(row["Late Days"]), 1, 0, "C")  # type: ignore
+            pdf.cell(widths[6], 6, str(row["Days in Month"]), 1, 0, "C")  # type: ignore
+            pdf.cell(widths[7], 6, f"{row['Per Day']:,.1f}", 1, 0, "R")  # type: ignore
+            pdf.cell(
+                widths[8],
+                6,
+                f"{row['Total Deduction Amount']:,.1f}",
+                1,
+                0,
+                "R",
+            )  # type: ignore
+            pdf.cell(widths[9], 6, f"{row['Total Final Salary']:,.1f}", 1, 0, "R")  # type: ignore
+            pdf.ln()
+
+          pdf.ln(3)
 
         pdf_output = bytes(pdf.output())
 
@@ -928,7 +999,7 @@ else:
 
     slip_emps = run_query(
         """
-            SELECT reg_no, name, designation, basic_salary, absent_days, late_days, 
+            SELECT reg_no, name, designation, staff_category, basic_salary, absent_days, late_days, 
                    days_in_month, considered_red_days, reason 
             FROM salaries WHERE campus = ? AND month_year = ? ORDER BY name;
         """,
@@ -942,9 +1013,9 @@ else:
       )
 
       if selected_slip_name:
-        r_no, name, desig, b_sal, abs_d, late_d, dim, cred_d, reason = emp_dict[
-            selected_slip_name
-        ]
+        r_no, name, desig, s_cat, b_sal, abs_d, late_d, dim, cred_d, reason = (
+            emp_dict[selected_slip_name]
+        )
         per_day = b_sal / dim if dim > 0 else 0
         cred_amount = cred_d * per_day
         absent_gross_amount = abs_d * per_day
@@ -971,7 +1042,7 @@ else:
                         <td><b>Reg No:</b> {r_no}</td>
                     </tr>
                     <tr>
-                        <td><b>Designation:</b> {desig}</td>
+                        <td><b>Designation:</b> {desig} ({s_cat})</td>
                         <td><b>Month:</b> {month_filter}</td>
                     </tr>
                 </table>
@@ -1037,7 +1108,12 @@ else:
         slip_pdf.set_font("Arial", "B", 10)
         slip_pdf.cell(0, 6, f"Billing Month: {month_filter}", 0, 1, "L")  # type: ignore
         slip_pdf.cell(
-            0, 6, f"Employee Name: {name} (Reg No: {r_no})", 0, 1, "L"
+            0,
+            6,
+            f"Employee Name: {name} (Reg No: {r_no}) [{s_cat}]",
+            0,
+            1,
+            "L",
         )  # type: ignore
         slip_pdf.cell(0, 6, f"Designation: {desig}", 0, 1, "L")  # type: ignore
         slip_pdf.ln(5)
