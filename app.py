@@ -27,13 +27,6 @@ st.markdown(
         margin-bottom: 25px;
         font-weight: 500;
     }
-    .metric-card {
-        background-color: #F8FAFC;
-        border: 1px solid #E2E8F0;
-        padding: 15px;
-        border-radius: 10px;
-        text-align: center;
-    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -125,9 +118,7 @@ if not st.session_state.authenticated:
         st.error("Invalid Password! Please try again.")
 else:
   # Sidebar Navigation for 5 Campuses and Summary Tab
-  st.sidebar.markdown(
-      "### 🏫 EMS Portals", unsafe_allow_html=True
-  )
+  st.sidebar.markdown("### 🏫 EMS Portals", unsafe_allow_html=True)
   campuses = [
       "Kharadar",
       "Kharadar Extension",
@@ -140,7 +131,14 @@ else:
 
   month_filter = st.sidebar.selectbox(
       "Select Month",
-      ["July 2026", "August 2026", "September 2026", "October 2026"],
+      [
+          "July 2026",
+          "August 2026",
+          "September 2026",
+          "October 2026",
+          "November 2026",
+          "December 2026",
+      ],
   )
 
   st.sidebar.markdown("---")
@@ -149,7 +147,6 @@ else:
     st.rerun()
 
   if selected_tab != "Summary":
-    # Branded Header with Logo Mock
     st.markdown(
         "<div style='text-align: center;'><span"
         " style='font-size:32px;'>🎓</span></div>",
@@ -201,16 +198,23 @@ else:
       ).fillna(0)
       df["Plus 1"] = pd.to_numeric(df["Plus 1"]).fillna(0)
 
-      # Automatic Calculations
+      # Automatic Calculations with Corrected Deduction Logic
       df["Per Day"] = df.apply(
           lambda row: row["Basic Salary"] / row["Days in Month"]
           if row["Days in Month"] > 0
           else 0,
           axis=1,
       )
-      df["Ded for Absent"] = df["Absent Days"] * df["Per Day"]
+
+      # Jo absents consider ho gayeen unki deduction nahi karni
+      df["Actual Absent for Ded"] = df.apply(
+          lambda row: max(0, row["Absent Days"] - row["Considered Red Days"]),
+          axis=1,
+      )
+      df["Ded for Absent"] = df["Actual Absent for Ded"] * df["Per Day"]
       df["Total Deduction"] = df["Ded for Absent"] + df["Deduction Late"]
       df["Considered Red Amount"] = df["Considered Red Days"] * df["Per Day"]
+
       df["Final Salary"] = (
           df["Basic Salary"]
           - df["Total Deduction"]
@@ -311,7 +315,6 @@ else:
 
     with col_dl:
       if rows:
-        # Re-calculate for export
         csv = display_df.to_csv(index=False).encode("utf-8")
         st.download_button(
             label="📥 Download CSV / Excel Report",
@@ -339,7 +342,7 @@ else:
         st.metric("Total Final Payout", f"Rs. {df['Final Salary'].sum():,.2f}")
 
   else:
-    # CONSOLIDATED SUMMARY TAB (All 5 Campuses)
+    # CONSOLIDATED SUMMARY TAB (All Campuses)
     st.markdown(
         "<div style='text-align: center;'><span"
         " style='font-size:32px;'>📈</span></div>",
@@ -361,7 +364,6 @@ else:
         """
     summary_data = run_query(sum_query, (month_filter,))
 
-    # Fetch all records for full financial metrics across campuses
     all_q = """
             SELECT basic_salary, absent_days, late_days, deduction_late, days_in_month, considered_red_days, plus_one 
             FROM salaries WHERE month_year = ?;
@@ -369,26 +371,22 @@ else:
     all_rows = run_query(all_q, (month_filter,))
 
     if summary_data and all_rows:
-      # Calculate overall metrics
       total_staff_all = sum([r[1] for r in summary_data])
       total_basic_all = sum([r[2] for r in summary_data])
 
-      # Compute precise totals
       tot_deductions = 0
       tot_final = 0
-      tot_considered = 0
       for r in all_rows:
         b_sal, abs_d, late_d, ded_l, dim, cred_d, p_one = r
         per_day = b_sal / dim if dim > 0 else 0
-        ded_abs = abs_d * per_day
+        actual_abs = max(0, abs_d - cred_d)
+        ded_abs = actual_abs * per_day
         total_ded = ded_abs + ded_l
         cred_amt = cred_d * per_day
         f_sal = b_sal - total_ded + cred_amt + (p_one * per_day)
         tot_deductions += total_ded
         tot_final += f_sal
-        tot_considered += cred_amt
 
-      # Overall KPI Metrics Row
       st.markdown("### 🌟 Overall Network Analytics")
       k1, k2, k3, k4 = st.columns(4)
       with k1:
@@ -408,13 +406,12 @@ else:
       )
       st.dataframe(sum_df, use_container_width=True)
 
-      # Export Consolidated Summary
       sum_csv = sum_df.to_csv(index=False).encode("utf-8")
       st.download_button(
           label="📥 Download Consolidated Summary Report (CSV)",
           data=sum_csv,
           file_name=f"EMS_Consolidated_Summary_{month_filter}.csv",
-          mime="text/css",
+          mime="text/csv",
           use_container_width=True,
       )
     else:
