@@ -25,11 +25,12 @@ st.markdown(
     [data-testid="stSidebar"] div {
         color: #ffffff !important;
     }
-    /* Fix Logout Button Text Visibility */
+    /* Fix Logout Button Styling */
     [data-testid="stSidebar"] button {
         color: #2C1654 !important;
         background-color: #ffffff !important;
         font-weight: 700;
+        border-radius: 6px;
     }
     .main-header {
         font-size: 26px;
@@ -193,50 +194,75 @@ if "authenticated" not in st.session_state:
   st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
+  # Professional Styled Login Screen with LOGO.png
   st.markdown(
-      "<h1 style='text-align: center; color: #2C1654;'>🏫 EXCELLENCE MODEL"
-      " SCHOOL</h1>",
+      "<div style='text-align: center; padding-top: 15px;'>",
+      unsafe_allow_html=True,
+  )
+  try:
+    st.image("LOGO.png", width=110)
+  except Exception:
+    st.markdown("<h1>🎓</h1>", unsafe_allow_html=True)
+  st.markdown(
+      "<h1 style='color: #2C1654; margin-top: 10px; font-weight: 800;'>EXCELLENCE"
+      " MODEL SCHOOL</h1>",
       unsafe_allow_html=True,
   )
   st.markdown(
-      "<h3 style='text-align: center; color: gray;'>Salary Management ERP"
-      " Portal</h3>",
+      "<h3 style='color: #4B5563; font-weight: 500; font-size: 17px;'>Salary"
+      " Management ERP Portal</h3>",
       unsafe_allow_html=True,
   )
+  st.markdown("</div>", unsafe_allow_html=True)
 
-  col1, col2, col3 = st.columns([1, 2, 1])
+  col1, col2, col3 = st.columns([1, 1.2, 1])
   with col2:
-    st.subheader("🔒 Secure System Login")
-    password_input = st.text_input("Enter Password", type="password")
+    st.markdown(
+        "<div style='background: #ffffff; padding: 30px; border-radius: 12px;"
+        " box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e5e7eb;"
+        " margin-top: 10px;'>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<h3"
+        " style='color: #2C1654; text-align: center; margin-bottom:"
+        " 20px; font-size: 20px;'>🔒 Secure System Login</h3>",
+        unsafe_allow_html=True,
+    )
+    password_input = st.text_input(
+        "Enter Password", type="password", key="login_pass"
+    )
 
-    if st.button("Login to Portal", use_container_width=True):
+    if st.button("Login to Portal", use_container_width=True, type="primary"):
       if password_input == "namuka112":
         st.session_state.authenticated = True
         st.success("Login Successful!")
         st.rerun()
       else:
         st.error("Invalid Password! Please try again.")
+    st.markdown("</div>", unsafe_allow_html=True)
 else:
-  # Sidebar Navigation with Centralized Logo & School Name
+  # Sidebar Navigation with Clean Centered Logo & School Name
   with st.sidebar:
     st.markdown(
-        "<div style='text-align: center;'>", unsafe_allow_html=True
+        "<div style='text-align: center; padding-top: 10px;'>",
+        unsafe_allow_html=True,
     )
     try:
       st.image("LOGO.png", width=85)
     except Exception:
       st.markdown("### 🎓")
     st.markdown(
-        "<h3 style='margin: 5px 0 0 0; font-size: 16px; color: #ffffff;'>EXCELLENCE"
-        " MODEL SCHOOL</h3>",
+        "<h3 style='margin: 8px 0 0 0; font-size: 15px; color:"
+        " #ffffff;'>EXCELLENCE MODEL SCHOOL</h3>",
         unsafe_allow_html=True,
     )
     st.markdown(
-        "<p style='font-size:11px; color:#d1d5db; margin: 0;'>Enterprise"
+        "<p style='font-size:11px; color:#d1d5db; margin: 2px 0 0 0;'>Enterprise"
         " Management ERP</p>",
         unsafe_allow_html=True,
     )
-    st.markdown("</div>")
+    st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("---")
 
     campuses = [
@@ -664,10 +690,8 @@ else:
           pdf.cell(widths[9], 6, f"{row['Total Final Salary']:,.1f}", 1, 0, "R")  # type: ignore
           pdf.ln()
 
-        # Fixed PDF output for newer fpdf2 versions
-        pdf_output = pdf.output()
-        if isinstance(pdf_output, str):
-          pdf_output = pdf_output.encode("latin1")
+        # Robust output conversion for modern fpdf2 versions to prevent StreamlitAPIException
+        pdf_output = bytes(pdf.output())
 
         st.download_button(
             label="📄 Download PDF Report",
@@ -951,9 +975,7 @@ else:
         slip_pdf.cell(95, 6, "Employee Signature", 0, 0, "L")
         slip_pdf.cell(95, 6, "Authorized Stamp & Signature", 0, 1, "R")
 
-        slip_pdf_output = slip_pdf.output()
-        if isinstance(slip_pdf_output, str):
-          slip_pdf_output = slip_pdf_output.encode("latin1")
+        slip_pdf_output = bytes(slip_pdf.output())
 
         st.download_button(
             label=f"📥 Download {name} Salary Slip (PDF)",
