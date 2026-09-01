@@ -138,27 +138,24 @@ else:
         """
     rows = run_query(query, (selected_tab, month_filter))
 
-    columns = [
-        "ID",
-        "Reg No",
-        "Name",
-        "Designation",
-        "Basic Salary",
-        "Absent Days",
-        "Late Days",
-        "Deduction Late",
-        "Days in Month",
-        "Considered Red Days",
-        "Plus 1",
-        "Reason of Pending",
-    ]
-
     if rows:
-      df = pd.DataFrame(rows, columns=columns)
-    else:
-      df = pd.DataFrame(columns=columns)
-
-    if not df.empty:
+      df = pd.DataFrame(
+          rows,
+          columns=[
+              "ID",
+              "Reg No",
+              "Name",
+              "Designation",
+              "Basic Salary",
+              "Absent Days",
+              "Late Days",
+              "Deduction Late",
+              "Days in Month",
+              "Considered Red Days",
+              "Plus 1",
+              "Reason of Pending",
+          ],
+      )
       # Data Type Cleaning
       df["Basic Salary"] = pd.to_numeric(df["Basic Salary"]).fillna(0)
       df["Absent Days"] = pd.to_numeric(df["Absent Days"]).fillna(0)
@@ -207,43 +204,71 @@ else:
               "Reason of Pending",
           ]
       ]
-
-      edited_df = st.data_editor(display_df, num_rows="dynamic", key=selected_tab)
-
-      if st.button("💾 Save Changes to Database"):
-        delete_query = (
-            "DELETE FROM salaries WHERE campus = ? AND month_year = ?;"
-        )
-        execute_non_query(delete_query, (selected_tab, month_filter))
-
-        for idx, row in edited_df.iterrows():
-          insert_query = """
-                        INSERT INTO salaries (campus, reg_no, name, designation, basic_salary, absent_days, 
-                                              late_days, deduction_late, days_in_month, considered_red_days, plus_one, reason, month_year)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-                    """
-          execute_non_query(
-              insert_query,
-              (
-                  selected_tab,
-                  row["Reg No"],
-                  row["Name"],
-                  row["Designation"],
-                  row["Basic Salary"],
-                  row["Absent Days"],
-                  row["Late Days"],
-                  row["Deduction Late"],
-                  row["Days in Month"],
-                  row["Considered Red Days"],
-                  row["Plus 1"],
-                  row["Reason of Pending"],
-                  month_filter,
-              ),
-          )
-        st.success("✅ Records and automatic formulas updated successfully!")
-        st.rerun()
     else:
-      st.info("No records found for this campus. Add new rows using the grid.")
+      # Khali template jisme user naye rows add kar sakega
+      display_df = pd.DataFrame(
+          columns=[
+              "Reg No",
+              "Name",
+              "Designation",
+              "Basic Salary",
+              "Absent Days",
+              "Late Days",
+              "Deduction Late",
+              "Days in Month",
+              "Considered Red Days",
+              "Plus 1",
+              "Reason of Pending",
+          ]
+      )
+
+    edited_df = st.data_editor(display_df, num_rows="dynamic", key=selected_tab)
+
+    if st.button("💾 Save Changes to Database"):
+      delete_query = "DELETE FROM salaries WHERE campus = ? AND month_year = ?;"
+      execute_non_query(delete_query, (selected_tab, month_filter))
+
+      for idx, row in edited_df.iterrows():
+        if pd.isna(row["Name"]) or str(row["Name"]).strip() == "":
+          continue
+
+        insert_query = """
+                    INSERT INTO salaries (campus, reg_no, name, designation, basic_salary, absent_days, 
+                                          late_days, deduction_late, days_in_month, considered_red_days, plus_one, reason, month_year)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                """
+        execute_non_query(
+            insert_query,
+            (
+                selected_tab,
+                str(row["Reg No"]) if pd.notna(row["Reg No"]) else "",
+                str(row["Name"]),
+                str(row["Designation"])
+                if pd.notna(row["Designation"])
+                else "",
+                float(row["Basic Salary"])
+                if pd.notna(row["Basic Salary"])
+                else 0,
+                float(row["Absent Days"]) if pd.notna(row["Absent Days"]) else 0,
+                float(row["Late Days"]) if pd.notna(row["Late Days"]) else 0,
+                float(row["Deduction Late"])
+                if pd.notna(row["Deduction Late"])
+                else 0,
+                float(row["Days in Month"])
+                if pd.notna(row["Days in Month"])
+                else 30,
+                float(row["Considered Red Days"])
+                if pd.notna(row["Considered Red Days"])
+                else 0,
+                float(row["Plus 1"]) if pd.notna(row["Plus 1"]) else 0,
+                str(row["Reason of Pending"])
+                if pd.notna(row["Reason of Pending"])
+                else "",
+                month_filter,
+            ),
+        )
+      st.success("✅ Records and automatic formulas updated successfully!")
+      st.rerun()
 
   else:
     # SUMMARY TAB (Aggregating all 5 campuses automatically)
