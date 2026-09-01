@@ -71,7 +71,7 @@ st.markdown(
 )
 
 
-# Neon Database (PostgreSQL) Connection
+# Neon Database (PostgreSQL) Connection with SSL fix
 def init_connection():
   db_url = st.secrets.get("DATABASE_URL")
   if not db_url:
@@ -80,6 +80,11 @@ def init_connection():
         " secrets in Streamlit Cloud."
     )
     st.stop()
+  # channel_binding parameter remove kar rahe hain taake psycopg2 error na de
+  if "channel_binding" in db_url:
+    db_url = db_url.split("&channel_binding")[0]
+  if "?" not in db_url:
+    db_url += "?sslmode=require"
   return psycopg2.connect(db_url)
 
 
@@ -114,7 +119,6 @@ def execute_non_query(query, params=None):
   conn.close()
 
 
-# Automatically next ID generate karne ka function with correct Campus Prefixes
 def get_next_employee_id(selected_campus):
   if "Extension" in selected_campus:
     prefix = "KH EXT-"
@@ -150,7 +154,6 @@ def get_next_employee_id(selected_campus):
   return new_id
 
 
-# Initialize Database Tables in Neon PostgreSQL
 def init_db():
   execute_non_query("""
         CREATE TABLE IF NOT EXISTS employees (
@@ -210,12 +213,10 @@ def get_month_index(m_str):
   return MONTH_ORDER.get(m_str, 7)
 
 
-# Authentication State Check
 if "authenticated" not in st.session_state:
   st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
-  # Centered Login Screen
   logo_html = ""
   if os.path.exists("LOGO.png"):
     with open("LOGO.png", "rb") as f:
@@ -308,7 +309,6 @@ else:
       st.session_state.authenticated = False
       st.rerun()
 
-  # 1. ADD NEW EMPLOYEE FORM TAB
   if nav_mode == "Add New Employee":
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
@@ -426,7 +426,6 @@ else:
           )
           st.balloons()
 
-  # 2. STAFF DIRECTORY TAB
   elif nav_mode == "Staff Directory (Master & Increment)":
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
@@ -552,7 +551,6 @@ else:
       st.success("✅ Staff Master Directory updated successfully!")
       st.rerun()
 
-  # 3. MONTHLY SALARY SHEET TAB
   elif nav_mode == "Monthly Salary Sheet":
     st.markdown(
         f"<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
@@ -934,7 +932,6 @@ else:
             use_container_width=True,
         )
 
-  # 4. EMPLOYEE YEARLY LEDGER TAB
   elif nav_mode == "Employee Yearly Ledger":
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
@@ -999,7 +996,6 @@ else:
     else:
       st.info("No employee records available for this campus yet.")
 
-  # 5. SALARY SLIP GENERATOR TAB
   elif nav_mode == "Salary Slip Generator":
     logo_html = ""
     if os.path.exists("LOGO.png"):
@@ -1223,7 +1219,6 @@ else:
     else:
       st.info("No salary records available for this month.")
 
-  # 6. SUMMARY TAB
   elif nav_mode == "Summary":
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
