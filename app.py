@@ -621,12 +621,16 @@ else:
           ],
       )
       df["Basic Salary"] = pd.to_numeric(df["Basic Salary"]).fillna(0)
-      df["Absent Days"] = pd.to_numeric(df["Absent Days"]).fillna(0)
-      df["Late Days"] = pd.to_numeric(df["Late Days"]).fillna(0)
-      df["Days in Month"] = pd.to_numeric(df["Days in Month"]).fillna(30)
-      df["Considered Red Days"] = pd.to_numeric(
-          df["Considered Red Days"]
-      ).fillna(0)
+      df["Absent Days"] = (
+          pd.to_numeric(df["Absent Days"]).fillna(0).astype(int)
+      )
+      df["Late Days"] = pd.to_numeric(df["Late Days"]).fillna(0).astype(int)
+      df["Days in Month"] = (
+          pd.to_numeric(df["Days in Month"]).fillna(30).astype(int)
+      )
+      df["Considered Red Days"] = (
+          pd.to_numeric(df["Considered Red Days"]).fillna(0).astype(int)
+      )
 
       df["Per Day"] = df.apply(
           lambda row: row["Basic Salary"] / row["Days in Month"]
@@ -708,6 +712,39 @@ else:
           work_df,
           num_rows="fixed",
           key=f"salary_sheet_{selected_campus}_{month_filter}_{cat}",
+          column_config={
+              "Reg No": st.column_config.TextColumn("Reg No", width="small"),
+              "Name": st.column_config.TextColumn("Staff Name", width="medium"),
+              "Designation": st.column_config.TextColumn(
+                  "Designation", width="large"
+              ),
+              "Basic Salary": st.column_config.NumberColumn(
+                  "Basic", format="%,.0f"
+              ),
+              "Absent Days": st.column_config.NumberColumn(
+                  "Abs", format="%d", step=1
+              ),
+              "Late Days": st.column_config.NumberColumn(
+                  "Late", format="%d", step=1
+              ),
+              "Considered Red Days": st.column_config.NumberColumn(
+                  "Considered", format="%d", step=1
+              ),
+              "Days in Month": st.column_config.NumberColumn(
+                  "Days", format="%d", step=1
+              ),
+              "Per Day": st.column_config.NumberColumn(
+                  "Per Day", format="%,.1f"
+              ),
+              "Total Deduction Amount": st.column_config.NumberColumn(
+                  "Deduction", format="%,.1f"
+              ),
+              "Plus 1": st.column_config.NumberColumn("Plus 1", format="%d"),
+              "Total Final Salary": st.column_config.NumberColumn(
+                  "Final Pay", format="%,.0f"
+              ),
+              "Remarks": st.column_config.TextColumn("Remarks", width="large"),
+          },
       )
 
       if not edited_cat_df.empty:
@@ -718,7 +755,7 @@ else:
             f"""
             <div style="background-color: #f3f4f6; padding: 10px 15px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; display: flex; justify-content: space-between; border-left: 5px solid #2C1654;">
                 <span>Total {cat}:</span>
-                <span>Basic: Rs. {sub_basic:,.2f} | Deductions: Rs. {sub_ded:,.2f} | <span style="color: green;">Final Payout: Rs. {sub_final:,.2f}</span></span>
+                <span>Basic: Rs. {sub_basic:,.0f} | Deductions: Rs. {sub_ded:,.1f} | <span style="color: green;">Final Payout: Rs. {sub_final:,.0f}</span></span>
             </div>
             """,
             unsafe_allow_html=True,
@@ -735,7 +772,7 @@ else:
       st.markdown(
           f"""
           <div style="background: linear-gradient(135deg, #2C1654 0%, #4338ca 100%); color: white; padding: 15px 20px; border-radius: 8px; font-weight: bold; font-size: 16px; margin-top: 15px; margin-bottom: 25px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
-              🏆 GRAND TOTAL ({selected_campus.upper()} BRANCH) — Basic: Rs. {grand_basic:,.2f} | Deductions: Rs. {grand_ded:,.2f} | Final Payout: Rs. {grand_final:,.2f}
+              🏆 GRAND TOTAL ({selected_campus.upper()} BRANCH) — Basic: Rs. {grand_basic:,.0f} | Deductions: Rs. {grand_ded:,.1f} | Final Payout: Rs. {grand_final:,.0f}
           </div>
           """,
           unsafe_allow_html=True,
@@ -868,7 +905,7 @@ else:
               "Final Pay",
               "Remarks",
           ]
-          widths = [16, 38, 32, 18, 12, 12, 18, 12, 18, 18, 20, 43]
+          widths = [16, 38, 35, 18, 12, 12, 18, 12, 18, 18, 20, 40]
 
           for i, col in enumerate(cols):
             pdf.cell(widths[i], 7, col, 1, 0, "C", fill=True)
@@ -895,7 +932,7 @@ else:
             pdf.cell(widths[0], 6, str(row["Reg No"]), 1, 0, "C", fill=True)
             pdf.cell(widths[1], 6, str(row["Name"])[:20], 1, 0, "L", fill=True)
             pdf.cell(
-                widths[2], 6, str(row["Designation"])[:18], 1, 0, "L", fill=True
+                widths[2], 6, str(row["Designation"])[:20], 1, 0, "L", fill=True
             )
             pdf.cell(
                 widths[3],
@@ -906,19 +943,29 @@ else:
                 "R",
                 fill=True,
             )
-            pdf.cell(widths[4], 6, str(row["Absent Days"]), 1, 0, "C", fill=True)
-            pdf.cell(widths[5], 6, str(row["Late Days"]), 1, 0, "C", fill=True)
+            pdf.cell(
+                widths[4], 6, str(int(row["Absent Days"])), 1, 0, "C", fill=True
+            )
+            pdf.cell(
+                widths[5], 6, str(int(row["Late Days"])), 1, 0, "C", fill=True
+            )
             pdf.cell(
                 widths[6],
                 6,
-                str(row["Considered Red Days"]),
+                str(int(row["Considered Red Days"])),
                 1,
                 0,
                 "C",
                 fill=True,
             )
             pdf.cell(
-                widths[7], 6, str(row["Days in Month"]), 1, 0, "C", fill=True
+                widths[7],
+                6,
+                str(int(row["Days in Month"])),
+                1,
+                0,
+                "C",
+                fill=True,
             )
             pdf.cell(
                 widths[8], 6, f"{row['Per Day']:,.1f}", 1, 0, "R", fill=True
@@ -935,7 +982,7 @@ else:
             pdf.cell(
                 widths[10],
                 6,
-                f"{row['Total Final Salary']:,.1f}",
+                f"{row['Total Final Salary']:,.0f}",
                 1,
                 0,
                 "R",
@@ -956,10 +1003,10 @@ else:
           pdf.set_font("Arial", "B", 9)
           pdf.set_fill_color(229, 231, 235)
           pdf.cell(sum(widths[:3]), 6, f"Total {cat}:", 1, 0, "R", fill=True)
-          pdf.cell(widths[3], 6, f"{sub_basic:,.2f}", 1, 0, "R", fill=True)
+          pdf.cell(widths[3], 6, f"{sub_basic:,.0f}", 1, 0, "R", fill=True)
           pdf.cell(sum(widths[4:9]), 6, "", 1, 0, "C", fill=True)
           pdf.cell(widths[9], 6, f"{sub_ded:,.2f}", 1, 0, "R", fill=True)
-          pdf.cell(widths[10], 6, f"{sub_final:,.2f}", 1, 0, "R", fill=True)
+          pdf.cell(widths[10], 6, f"{sub_final:,.0f}", 1, 0, "R", fill=True)
           pdf.cell(widths[11], 6, "", 1, 0, "C", fill=True)
           pdf.ln(8)
 
@@ -968,8 +1015,8 @@ else:
         pdf.set_text_color(255, 255, 255)
         grand_label = (
             f"GRAND TOTAL ({selected_campus.upper()} BRANCH) -- Basic: Rs."
-            f" {grand_basic_pdf:,.2f} | Deductions: Rs. {grand_ded_pdf:,.2f} |"
-            f" Final Payout: Rs. {grand_final_pdf:,.2f}"
+            f" {grand_basic_pdf:,.0f} | Deductions: Rs. {grand_ded_pdf:,.2f} |"
+            f" Final Payout: Rs. {grand_final_pdf:,.0f}"
         )
         pdf.cell(sum(widths), 8, grand_label, 1, 1, "C", fill=True)
         pdf.ln(10)
@@ -1075,20 +1122,15 @@ else:
           sal_str = f"{c_sal_sum:,.0f}" if c_sal_sum > 0 else "0"
           pay_str = f"{c_pay_sum:,.0f}" if c_pay_sum > 0 else "0"
 
-          pdf.cell(
-              sum_widths[0], 6, str(idx_c + 1), 1, 0, "C"
-          )  # S.No
-          pdf.cell(
-              sum_widths[1], 6, display_campus_names[idx_c], 1, 0, "L"
-          )  # Campus Name
-          pdf.cell(sum_widths[2], 6, sal_str, 1, 0, "R")  # Total Salary
-          pdf.cell(sum_widths[3], 6, ded_str, 1, 0, "R")  # Deduction
-          pdf.cell(sum_widths[4], 6, cred_str, 1, 0, "R")  # Considered
-          pdf.cell(sum_widths[5], 6, p1_str, 1, 0, "C")  # Plus 1
-          pdf.cell(sum_widths[6], 6, pay_str, 1, 0, "R")  # Payable
+          pdf.cell(sum_widths[0], 6, str(idx_c + 1), 1, 0, "C")
+          pdf.cell(sum_widths[1], 6, display_campus_names[idx_c], 1, 0, "L")
+          pdf.cell(sum_widths[2], 6, sal_str, 1, 0, "R")
+          pdf.cell(sum_widths[3], 6, ded_str, 1, 0, "R")
+          pdf.cell(sum_widths[4], 6, cred_str, 1, 0, "R")
+          pdf.cell(sum_widths[5], 6, p1_str, 1, 0, "C")
+          pdf.cell(sum_widths[6], 6, pay_str, 1, 0, "R")
           pdf.ln()
 
-        # Summary Total Row
         pdf.set_font("Arial", "B", 9.5)
         pdf.set_fill_color(0, 0, 0)
         pdf.set_text_color(255, 255, 255)
@@ -1165,8 +1207,8 @@ else:
               "Month": m_yr,
               "Month Index": get_month_index(m_yr),
               "Basic Salary": b_sal,
-              "Absent Days": abs_d,
-              "Late Days": late_d,
+              "Absent Days": int(abs_d),
+              "Late Days": int(late_d),
               "Total Deduction": tot_ded,
               "Final Payout": final_pay,
           })
@@ -1266,27 +1308,27 @@ else:
                     </tr>
                     <tr>
                         <td style="padding: 6px;">Basic Salary</td>
-                        <td style="padding: 6px; text-align: right;">{b_sal:,.2f}</td>
-                        <td style="padding: 6px;">Absent Days ({abs_d})</td>
-                        <td style="padding: 6px; text-align: right; color: #b91c1c;">- {absent_gross_amount:,.2f}</td>
+                        <td style="padding: 6px; text-align: right;">{b_sal:,.0f}</td>
+                        <td style="padding: 6px;">Absent Days ({int(abs_d)})</td>
+                        <td style="padding: 6px; text-align: right; color: #b91c1c;">- {absent_gross_amount:,.1f}</td>
                     </tr>
                     <tr>
-                        <td style="padding: 6px; color: #1f2937; font-size: 13px;"><b>Considered Days:</b> {cred_d}</td>
-                        <td style="padding: 6px; text-align: right; color: #047857;">+ {cred_amount:,.2f}</td>
-                        <td style="padding: 6px;">Late Days ({late_d} -> {auto_ded_late} Ded. Day)</td>
+                        <td style="padding: 6px; color: #1f2937; font-size: 13px;"><b>Considered Days:</b> {int(cred_d)}</td>
+                        <td style="padding: 6px; text-align: right; color: #047857;">+ {cred_amount:,.1f}</td>
+                        <td style="padding: 6px;">Late Days ({int(late_d)} -> {auto_ded_late} Ded. Day)</td>
                         <td style="padding: 6px; text-align: right;">-</td>
                     </tr>
                     <tr>
                         <td style="padding: 6px;">Punctuality Bonus (+1)</td>
-                        <td style="padding: 6px; text-align: right;">{plus_amount:,.2f}</td>
+                        <td style="padding: 6px; text-align: right;">{plus_amount:,.1f}</td>
                         <td style="padding: 6px;">Total Deductions</td>
-                        <td style="padding: 6px; text-align: right; color: red; font-weight: bold;">{tot_ded:,.2f}</td>
+                        <td style="padding: 6px; text-align: right; color: red; font-weight: bold;">{tot_ded:,.1f}</td>
                     </tr>
                     <tr style="background-color: #f3f4f6; font-weight: bold;">
                         <td style="padding: 8px;">Gross Total</td>
-                        <td style="padding: 8px; text-align: right;">{(b_sal + plus_amount):,.2f}</td>
+                        <td style="padding: 8px; text-align: right;">{(b_sal + plus_amount):,.0f}</td>
                         <td style="padding: 8px;">Net Final Payout</td>
-                        <td style="padding: 8px; text-align: right; color: green;">Rs. {final_pay:,.2f}</td>
+                        <td style="padding: 8px; text-align: right; color: green;">Rs. {final_pay:,.0f}</td>
                     </tr>
                 </table>
                 <p style="font-size: 12px; margin-top: 15px; color: gray;"><b>Remarks:</b> {reason if reason else 'None'}</p>
@@ -1349,10 +1391,10 @@ else:
       with k1:
         st.metric("Total Network Staff", f"{total_staff_all}")
       with k2:
-        st.metric("Total Basic Budget", f"Rs. {total_basic_all:,.2f}")
+        st.metric("Total Basic Budget", f"Rs. {total_basic_all:,.0f}")
       with k3:
-        st.metric("Total Deductions", f"Rs. {tot_deductions:,.2f}")
+        st.metric("Total Deductions", f"Rs. {tot_deductions:,.1f}")
       with k4:
-        st.metric("Grand Total Final Payout", f"Rs. {tot_final:,.2f}")
+        st.metric("Grand Total Final Payout", f"Rs. {tot_final:,.0f}")
     else:
       st.info("No data entered yet across campuses for summary.")
