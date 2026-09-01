@@ -25,6 +25,12 @@ st.markdown(
     [data-testid="stSidebar"] div {
         color: #ffffff !important;
     }
+    /* Fix Logout Button Text Visibility */
+    [data-testid="stSidebar"] button {
+        color: #2C1654 !important;
+        background-color: #ffffff !important;
+        font-weight: 700;
+    }
     .main-header {
         font-size: 26px;
         font-weight: 800;
@@ -39,31 +45,10 @@ st.markdown(
         margin-bottom: 20px;
         font-weight: 500;
     }
-    .logo-container {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 10px;
-    }
     </style>
     """,
     unsafe_allow_html=True,
 )
-
-
-# Helper function to display LOGO.png cleanly in main content headers
-def render_main_logo():
-  try:
-    st.markdown(
-        "<div style='text-align: center;'>", unsafe_allow_html=True
-    )
-    st.image("LOGO.png", width=90)
-    st.markdown("</div>", unsafe_allow_html=True)
-  except Exception:
-    st.markdown(
-        "<div style='text-align: center;'><span"
-        " style='font-size:36px;'>🏫</span></div>",
-        unsafe_allow_html=True,
-    )
 
 
 # SQLite Database Connection
@@ -232,18 +217,26 @@ if not st.session_state.authenticated:
       else:
         st.error("Invalid Password! Please try again.")
 else:
-  # Sidebar Navigation with Logo
+  # Sidebar Navigation with Centralized Logo & School Name
   with st.sidebar:
-    try:
-      st.image("LOGO.png", width=80)
-    except Exception:
-      pass
-    st.markdown("### EXCELLENCE MODEL SCHOOL", unsafe_allow_html=True)
     st.markdown(
-        "<p style='font-size:12px; color:#d1d5db;'>Enterprise Management"
-        " ERP</p>",
+        "<div style='text-align: center;'>", unsafe_allow_html=True
+    )
+    try:
+      st.image("LOGO.png", width=85)
+    except Exception:
+      st.markdown("### 🎓")
+    st.markdown(
+        "<h3 style='margin: 5px 0 0 0; font-size: 16px; color: #ffffff;'>EXCELLENCE"
+        " MODEL SCHOOL</h3>",
         unsafe_allow_html=True,
     )
+    st.markdown(
+        "<p style='font-size:11px; color:#d1d5db; margin: 0;'>Enterprise"
+        " Management ERP</p>",
+        unsafe_allow_html=True,
+    )
+    st.markdown("</div>")
     st.markdown("---")
 
     campuses = [
@@ -277,7 +270,6 @@ else:
 
   # 1. STAFF DIRECTORY / MASTER MANAGEMENT TAB
   if nav_mode == "Staff Directory (Master & Increment)":
-    render_main_logo()
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
@@ -395,7 +387,6 @@ else:
 
   # 2. MONTHLY SALARY SHEET TAB
   elif nav_mode == "Monthly Salary Sheet":
-    render_main_logo()
     st.markdown(
         f"<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
@@ -617,7 +608,6 @@ else:
 
     with col_pdf:
       if existing_rows:
-        # PDF Generation for Monthly Sheet
         pdf = FPDF(orientation="L", unit="mm", format="A4")
         pdf.add_page()
         pdf.set_font("Arial", "B", 14)
@@ -640,7 +630,6 @@ else:
         )
         pdf.ln(5)
 
-        # Table Header
         pdf.set_font("Arial", "B", 8)
         cols = [
             "Reg No",
@@ -659,12 +648,9 @@ else:
           pdf.cell(widths[i], 7, col, 1, 0, "C")
         pdf.ln()
 
-        # Table Rows
         pdf.set_font("Arial", "", 8)
         for idx, row in display_df.iterrows():
-          pdf.cell(
-              widths[0], 6, str(row["Reg No"]), 1, 0, "C"
-          )  # type: ignore
+          pdf.cell(widths[0], 6, str(row["Reg No"]), 1, 0, "C")  # type: ignore
           pdf.cell(widths[1], 6, str(row["Name"])[:25], 1, 0, "L")  # type: ignore
           pdf.cell(widths[2], 6, str(row["Designation"])[:22], 1, 0, "L")  # type: ignore
           pdf.cell(widths[3], 6, f"{row['Basic Salary']:,.0f}", 1, 0, "R")  # type: ignore
@@ -678,7 +664,11 @@ else:
           pdf.cell(widths[9], 6, f"{row['Total Final Salary']:,.1f}", 1, 0, "R")  # type: ignore
           pdf.ln()
 
-        pdf_output = pdf.output(dest="S").encode("latin1")
+        # Fixed PDF output for newer fpdf2 versions
+        pdf_output = pdf.output()
+        if isinstance(pdf_output, str):
+          pdf_output = pdf_output.encode("latin1")
+
         st.download_button(
             label="📄 Download PDF Report",
             data=pdf_output,
@@ -707,7 +697,6 @@ else:
 
   # 3. EMPLOYEE YEARLY LEDGER & CHARTS TAB
   elif nav_mode == "Employee Yearly Ledger":
-    render_main_logo()
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
@@ -792,7 +781,6 @@ else:
 
   # 4. INDIVIDUAL SALARY SLIP GENERATOR TAB
   elif nav_mode == "Salary Slip Generator":
-    render_main_logo()
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
@@ -831,7 +819,6 @@ else:
         plus_amount = p_one * per_day
         final_pay = b_sal - tot_ded + plus_amount
 
-        # On-screen Salary Slip Preview Box
         st.markdown(
             f"""
             <div style="border: 2px solid #2C1654; padding: 25px; border-radius: 10px; background-color: #ffffff; color: #000000; max-width: 700px; margin: auto;">
@@ -892,7 +879,6 @@ else:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # PDF Download for Individual Slip
         slip_pdf = FPDF(orientation="P", unit="mm", format="A4")
         slip_pdf.add_page()
         slip_pdf.set_font("Arial", "B", 16)
@@ -909,18 +895,13 @@ else:
         slip_pdf.ln(5)
 
         slip_pdf.set_font("Arial", "B", 10)
-        slip_pdf.cell(
-            0, 6, f"Billing Month: {month_filter}", 0, 1, "L"
-        )  # type: ignore
+        slip_pdf.cell(0, 6, f"Billing Month: {month_filter}", 0, 1, "L")  # type: ignore
         slip_pdf.cell(
             0, 6, f"Employee Name: {name} (Reg No: {r_no})", 0, 1, "L"
         )  # type: ignore
-        slip_pdf.cell(
-            0, 6, f"Designation: {desig}", 0, 1, "L"
-        )  # type: ignore
+        slip_pdf.cell(0, 6, f"Designation: {desig}", 0, 1, "L")  # type: ignore
         slip_pdf.ln(5)
 
-        # Slip Table Header
         slip_pdf.set_font("Arial", "B", 10)
         slip_pdf.cell(90, 7, "Particulars", 1, 0, "L")
         slip_pdf.cell(100, 7, "Amount (PKR)", 1, 1, "R")
@@ -970,7 +951,10 @@ else:
         slip_pdf.cell(95, 6, "Employee Signature", 0, 0, "L")
         slip_pdf.cell(95, 6, "Authorized Stamp & Signature", 0, 1, "R")
 
-        slip_pdf_output = slip_pdf.output(dest="S").encode("latin1")
+        slip_pdf_output = slip_pdf.output()
+        if isinstance(slip_pdf_output, str):
+          slip_pdf_output = slip_pdf_output.encode("latin1")
+
         st.download_button(
             label=f"📥 Download {name} Salary Slip (PDF)",
             data=slip_pdf_output,
@@ -986,7 +970,6 @@ else:
 
   # 5. NETWORK SUMMARY TAB
   elif nav_mode == "Summary":
-    render_main_logo()
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
