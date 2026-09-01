@@ -71,31 +71,20 @@ st.markdown(
 )
 
 
-# Neon Database (PostgreSQL) Connection with Bulletproof URL Parsing
 def init_connection():
   db_url = st.secrets.get("DATABASE_URL")
   if not db_url:
-    st.error(
-        "⚠️ DATABASE_URL not found in Streamlit Secrets! Please configure"
-        " secrets in Streamlit Cloud."
-    )
+    st.error("⚠️ DATABASE_URL not found in Streamlit Secrets!")
     st.stop()
-
-  # Clean up quotes and spaces
   db_url = db_url.strip().strip('"').strip("'")
-
-  # Completely strip channel_binding and its value using regex
   db_url = re.sub(r"([&?])channel_binding=[^&]*", "", db_url)
   db_url = db_url.replace("&&", "&").replace("?&", "?")
   if db_url.endswith("&") or db_url.endswith("?"):
     db_url = db_url[:-1]
-
-  # Ensure sslmode=require is present correctly
   if "?" not in db_url:
     db_url += "?sslmode=require"
   elif "sslmode=" not in db_url:
     db_url += "&sslmode=require"
-
   return psycopg2.connect(db_url)
 
 
@@ -141,28 +130,19 @@ def get_next_employee_id(selected_campus):
     prefix = "PV-"
   else:
     prefix = "KH-"
-
   try:
     query = (
         "SELECT reg_no FROM employees WHERE campus = %s ORDER BY id DESC LIMIT"
         " 1;"
     )
     result = run_query(query, (selected_campus,))
-
     if result and result[0] and result[0][0]:
-      last_id = result[0][0]
-      numbers = re.findall(r"\d+", last_id)
-      if numbers:
-        next_num = int(numbers[-1]) + 1
-        new_id = f"{prefix}{next_num}"
-      else:
-        new_id = f"{prefix}1"
-    else:
-      new_id = f"{prefix}1"
+      numbers = re.findall(r"\d+", result[0][0])
+      next_num = int(numbers[-1]) + 1 if numbers else 1
+      return f"{prefix}{next_num}"
   except Exception:
-    new_id = f"{prefix}1"
-
-  return new_id
+    pass
+  return f"{prefix}1"
 
 
 def init_db():
@@ -182,7 +162,6 @@ def init_db():
             leaving_month TEXT DEFAULT ''
         );
     """)
-
   execute_non_query("""
         CREATE TABLE IF NOT EXISTS salaries (
             id SERIAL PRIMARY KEY,
@@ -228,14 +207,11 @@ if "authenticated" not in st.session_state:
   st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
-  logo_html = ""
-  if os.path.exists("LOGO.png"):
-    with open("LOGO.png", "rb") as f:
-      logo_b64 = base64.b64encode(f.read()).decode()
-      logo_html = f'<img src="data:image/png;base64,{logo_b64}" width="90" style="margin-bottom: 10px; border-radius: 10px; box-shadow: 0 3px 8px rgba(0,0,0,0.15);">'
-  else:
-    logo_html = '<h1 style="margin:0;">🎓</h1>'
-
+  logo_html = (
+      f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="90" style="margin-bottom: 10px; border-radius: 10px; box-shadow: 0 3px 8px rgba(0,0,0,0.15);">'
+      if os.path.exists("LOGO.png")
+      else '<h1 style="margin:0;">🎓</h1>'
+  )
   st.markdown(
       f"""
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; margin-top: 40px; margin-bottom: 20px;">
@@ -260,7 +236,6 @@ if not st.session_state.authenticated:
     password_input = st.text_input(
         "Enter Password", type="password", key="login_pass"
     )
-
     if st.button("Login to Portal", use_container_width=True, type="primary"):
       if password_input == "namuka112":
         st.session_state.authenticated = True
@@ -270,18 +245,15 @@ if not st.session_state.authenticated:
         st.error("Invalid Password! Please try again.")
 else:
   with st.sidebar:
-    logo_html = ""
-    if os.path.exists("LOGO.png"):
-      with open("LOGO.png", "rb") as f:
-        logo_b64 = base64.b64encode(f.read()).decode()
-        logo_html = f'<img src="data:image/png;base64,{logo_b64}" width="80" style="margin-bottom: 8px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">'
-    else:
-      logo_html = '<h3 style="margin:0;">🎓</h3>'
-
+    logo_sidebar = (
+        f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="80" style="margin-bottom: 8px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">'
+        if os.path.exists("LOGO.png")
+        else '<h3 style="margin:0;">🎓</h3>'
+    )
     st.markdown(
         f"""
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10px 0; width: 100%;">
-            {logo_html}
+            {logo_sidebar}
             <h3 style="margin: 6px 0 0 0; font-size: 15px; color: #ffffff; font-weight: 700; letter-spacing: 0.5px; text-align: center;">EXCELLENCE MODEL SCHOOL</h3>
             <p style="font-size: 11px; color: #d1d5db; margin: 3px 0 0 0; text-align: center;">Enterprise Management ERP</p>
         </div>
@@ -289,16 +261,16 @@ else:
         unsafe_allow_html=True,
     )
     st.markdown("---")
-
-    campuses = [
-        "Kharadar",
-        "Kharadar Extension",
-        "Tower Campus",
-        "Sony Campus",
-        "Park View",
-    ]
-    selected_campus = st.selectbox("Select Campus", campuses)
-
+    selected_campus = st.selectbox(
+        "Select Campus",
+        [
+            "Kharadar",
+            "Kharadar Extension",
+            "Tower Campus",
+            "Sony Campus",
+            "Park View",
+        ],
+    )
     nav_mode = st.radio(
         "Main Navigation",
         [
@@ -310,11 +282,9 @@ else:
             "Summary",
         ],
     )
-
     month_filter = st.selectbox(
         "Select Month", list(MONTH_ORDER.keys()), index=7
     )
-
     st.markdown("---")
     if st.button("🚪 LOGOUT", use_container_width=True):
       st.session_state.authenticated = False
@@ -349,7 +319,6 @@ else:
               "Park View",
           ].index(selected_campus),
       )
-
       auto_generated_id = get_next_employee_id(new_campus)
       new_reg_no = st.text_input(
           "Registration / Employee ID", value=auto_generated_id
@@ -390,7 +359,7 @@ else:
         if existing_check:
           st.error(
               f"⚠️ Employee ID '{new_reg_no}' already exists in {new_campus}"
-              " campus! Please use a unique ID."
+              " campus!"
           )
         else:
           execute_non_query(
@@ -410,30 +379,8 @@ else:
                   new_status,
               ),
           )
-
-          j_idx = get_month_index(new_joining_month)
-          curr_idx = get_month_index(month_filter)
-          if j_idx <= curr_idx and new_status == "Active":
-            execute_non_query(
-                """
-                        INSERT INTO salaries (campus, reg_no, name, designation, staff_category, basic_salary, absent_days, late_days, days_in_month, considered_red_days, reason, month_year)
-                        VALUES (%s, %s, %s, %s, %s, %s, 0, 0, 30, 0, '', %s);
-                    """,
-                (
-                    new_campus,
-                    new_reg_no,
-                    new_name,
-                    new_designation,
-                    new_staff_category,
-                    new_basic_salary,
-                    month_filter,
-                ),
-            )
-
           st.success(
-              f"✅ Successfully registered {new_name} ({new_designation} -"
-              f" {new_staff_category}) with ID {new_reg_no} for"
-              f" {new_campus}!"
+              f"✅ Successfully registered {new_name} for {new_campus}!"
           )
           st.balloons()
 
@@ -455,40 +402,40 @@ else:
         """,
         (selected_campus,),
     )
-
-    if emp_rows:
-      emp_df = pd.DataFrame(
-          emp_rows,
-          columns=[
-              "ID",
-              "Reg No",
-              "Name",
-              "Father's Name",
-              "Designation",
-              "Staff Category",
-              "Basic Salary",
-              "Yearly Increment",
-              "Joining Month",
-              "Status",
-              "Leaving Month",
-          ],
-      )
-    else:
-      emp_df = pd.DataFrame(
-          columns=[
-              "ID",
-              "Reg No",
-              "Name",
-              "Father's Name",
-              "Designation",
-              "Staff Category",
-              "Basic Salary",
-              "Yearly Increment",
-              "Joining Month",
-              "Status",
-              "Leaving Month",
-          ]
-      )
+    emp_df = (
+        pd.DataFrame(
+            emp_rows,
+            columns=[
+                "ID",
+                "Reg No",
+                "Name",
+                "Father's Name",
+                "Designation",
+                "Staff Category",
+                "Basic Salary",
+                "Yearly Increment",
+                "Joining Month",
+                "Status",
+                "Leaving Month",
+            ],
+        )
+        if emp_rows
+        else pd.DataFrame(
+            columns=[
+                "ID",
+                "Reg No",
+                "Name",
+                "Father's Name",
+                "Designation",
+                "Staff Category",
+                "Basic Salary",
+                "Yearly Increment",
+                "Joining Month",
+                "Status",
+                "Leaving Month",
+            ]
+        )
+    )
 
     edited_emp_df = st.data_editor(
         emp_df,
@@ -564,7 +511,7 @@ else:
 
   elif nav_mode == "Monthly Salary Sheet":
     st.markdown(
-        f"<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
+        "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
     )
     st.markdown(
@@ -574,7 +521,6 @@ else:
     )
 
     current_m_idx = get_month_index(month_filter)
-
     master_emps = run_query(
         """
             SELECT reg_no, name, designation, staff_category, basic_salary, increment, joining_month, status, leaving_month 
@@ -586,15 +532,19 @@ else:
     for emp in master_emps:
       r_no, name, desig, s_cat, b_sal, inc, j_month, status, l_month = emp
       j_idx = get_month_index(j_month)
-
-      is_eligible = False
-      if j_idx <= current_m_idx:
-        if status == "Active":
-          is_eligible = True
-        elif status == "Left" and l_month:
-          l_idx = get_month_index(l_month)
-          if current_m_idx <= l_idx:
-            is_eligible = True
+      is_eligible = (
+          True
+          if j_idx <= current_m_idx
+          and (
+              status == "Active"
+              or (
+                  status == "Left"
+                  and l_month
+                  and current_m_idx <= get_month_index(l_month)
+              )
+          )
+          else False
+      )
 
       existing_entry = run_query(
           """
@@ -693,7 +643,6 @@ else:
           axis=1,
       )
       df["Total Deduction Amount"] = df["Net Deduction Units"] * df["Per Day"]
-
       df["Plus 1"] = df.apply(
           lambda row: 1 if row["Absent Days"] == 0 and row["Late Days"] == 0 else 0,
           axis=1,
@@ -713,10 +662,9 @@ else:
               "Basic Salary",
               "Absent Days",
               "Late Days",
-              "Deduction Late",
+              "Considered Red Days",
               "Days in Month",
               "Per Day",
-              "Considered Red Days",
               "Total Deduction Amount",
               "Plus 1",
               "Total Final Salary",
@@ -733,10 +681,9 @@ else:
               "Basic Salary",
               "Absent Days",
               "Late Days",
-              "Deduction Late",
+              "Considered Red Days",
               "Days in Month",
               "Per Day",
-              "Considered Red Days",
               "Total Deduction Amount",
               "Plus 1",
               "Total Final Salary",
@@ -749,10 +696,9 @@ else:
 
     for cat in categories:
       st.markdown(
-          f"<div class='section-title'>📌 {cat.upper()} PORTION</div>",
+          f"<div class='section-title'>📌 {cat} PORTION</div>",
           unsafe_allow_html=True,
       )
-
       cat_subset = full_display_df[full_display_df["Staff Category"] == cat]
       work_df = cat_subset.drop(columns=["Staff Category"])
 
@@ -760,16 +706,12 @@ else:
           work_df,
           num_rows="fixed",
           key=f"salary_sheet_{selected_campus}_{month_filter}_{cat}",
-          column_config={
-              "Staff Category": None,
-          },
       )
 
       if not edited_cat_df.empty:
         sub_basic = edited_cat_df["Basic Salary"].sum()
         sub_ded = edited_cat_df["Total Deduction Amount"].sum()
         sub_final = edited_cat_df["Total Final Salary"].sum()
-
         st.markdown(
             f"""
             <div style="background-color: #f3f4f6; padding: 10px 15px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; display: flex; justify-content: space-between; border-left: 5px solid #2C1654;">
@@ -788,7 +730,6 @@ else:
       grand_basic = all_edited_combined["Basic Salary"].sum()
       grand_ded = all_edited_combined["Total Deduction Amount"].sum()
       grand_final = all_edited_combined["Total Final Salary"].sum()
-
       st.markdown(
           f"""
           <div style="background: linear-gradient(135deg, #2C1654 0%, #4338ca 100%); color: white; padding: 15px 20px; border-radius: 8px; font-weight: bold; font-size: 16px; margin-top: 15px; margin-bottom: 25px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
@@ -805,7 +746,6 @@ else:
             "DELETE FROM salaries WHERE campus = %s AND month_year = %s;",
             (selected_campus, month_filter),
         )
-
         for idx, row in all_edited_combined.iterrows():
           if pd.isna(row["Name"]) or str(row["Name"]).strip() == "":
             continue
@@ -860,27 +800,49 @@ else:
 
     with col_pdf:
       if existing_rows:
+        # Professional PDF Generator with Logo & Clean Title
         pdf = FPDF(orientation="L", unit="mm", format="A4")
         pdf.add_page()
-        pdf.set_font("Arial", "B", 14)
+
+        # Header with Logo
+        if os.path.exists("LOGO.png"):
+          pdf.image("LOGO.png", x=12, y=10, w=16)
+
+        pdf.set_font("Arial", "B", 16)
+        pdf.set_text_color(44, 22, 84)  # Deep Purple
         pdf.cell(
             0,
             8,
-            "EXCELLENCE MODEL SCHOOL - CONSOLIDATED SALARY REPORT",
+            "EXCELLENCE MODEL SCHOOL",
             0,
             1,
             "C",
         )
+        pdf.set_font("Arial", "B", 11)
+        pdf.set_text_color(75, 85, 99)
+        pdf.cell(
+            0,
+            6,
+            "CONSOLIDATED SALARY REPORT & ATTENDANCE SUMMARY",
+            0,
+            1,
+            "C",
+        )
+
         pdf.set_font("Arial", "", 10)
         pdf.cell(
             0,
             6,
-            f"Campus: {selected_campus} | Month: {month_filter}",
+            f"Campus: {selected_campus}  |  Billing Month: {month_filter}",
             0,
             1,
             "C",
         )
-        pdf.ln(5)
+        pdf.ln(4)
+        pdf.set_draw_color(44, 22, 84)
+        pdf.set_line_width(0.6)
+        pdf.line(10, pdf.get_y(), 287, pdf.get_y())
+        pdf.ln(6)
 
         for cat in categories:
           cat_data = all_edited_combined[
@@ -889,54 +851,153 @@ else:
           if cat_data.empty:
             continue
 
-          pdf.set_font("Arial", "B", 11)
-          pdf.cell(0, 7, f"{cat.upper()} PORTION", 0, 1, "L")
+          # Category Section Heading (Fixed to clean name like 'Admin Staff')
+          pdf.set_font("Arial", "B", 12)
+          pdf.set_text_color(44, 22, 84)
+          pdf.cell(0, 8, f"{cat}", 0, 1, "L")
 
-          pdf.set_font("Arial", "B", 8)
+          # Table Header Styling
+          pdf.set_font("Arial", "B", 8.5)
+          pdf.set_fill_color(44, 22, 84)
+          pdf.set_text_color(255, 255, 255)
+
           cols = [
               "Reg No",
-              "Name",
+              "Staff Name",
               "Designation",
               "Basic",
-              "Absent",
+              "Abs",
               "Late",
+              "Considered",
               "Days",
               "Per Day",
               "Deduction",
               "Final Pay",
           ]
-          widths = [20, 45, 40, 22, 18, 18, 18, 22, 25, 25]
+          widths = [18, 42, 38, 20, 14, 14, 22, 14, 20, 22, 23]
+
           for i, col in enumerate(cols):
-            pdf.cell(widths[i], 7, col, 1, 0, "C")
+            pdf.cell(widths[i], 7, col, 1, 0, "C", fill=True)
           pdf.ln()
 
-          pdf.set_font("Arial", "", 8)
+          # Table Rows
+          pdf.set_font("Arial", "", 8.5)
+          pdf.set_text_color(0, 0, 0)
+          fill_row = False
+
           for idx, row in cat_data.iterrows():
-            pdf.cell(widths[0], 6, str(row["Reg No"]), 1, 0, "C")  # type: ignore
-            pdf.cell(widths[1], 6, str(row["Name"])[:25], 1, 0, "L")  # type: ignore
-            pdf.cell(widths[2], 6, str(row["Designation"])[:22], 1, 0, "L")  # type: ignore
-            pdf.cell(widths[3], 6, f"{row['Basic Salary']:,.0f}", 1, 0, "R")  # type: ignore
-            pdf.cell(widths[4], 6, str(row["Absent Days"]), 1, 0, "C")  # type: ignore
-            pdf.cell(widths[5], 6, str(row["Late Days"]), 1, 0, "C")  # type: ignore
-            pdf.cell(widths[6], 6, str(row["Days in Month"]), 1, 0, "C")  # type: ignore
-            pdf.cell(widths[7], 6, f"{row['Per Day']:,.1f}", 1, 0, "R")  # type: ignore
+            if fill_row:
+              pdf.set_fill_color(243, 244, 246)
+            else:
+              pdf.set_fill_color(255, 255, 255)
+
+            pdf.cell(
+                widths[0],
+                6,
+                str(row["Reg No"]),
+                1,
+                0,
+                "C",
+                fill=True,
+            )
+            pdf.cell(
+                widths[1],
+                6,
+                str(row["Name"])[:23],
+                1,
+                0,
+                "L",
+                fill=True,
+            )
+            pdf.cell(
+                widths[2],
+                6,
+                str(row["Designation"])[:20],
+                1,
+                0,
+                "L",
+                fill=True,
+            )
+            pdf.cell(
+                widths[3],
+                6,
+                f"{row['Basic Salary']:,.0f}",
+                1,
+                0,
+                "R",
+                fill=True,
+            )
+            pdf.cell(
+                widths[4],
+                6,
+                str(row["Absent Days"]),
+                1,
+                0,
+                "C",
+                fill=True,
+            )
+            pdf.cell(
+                widths[5],
+                6,
+                str(row["Late Days"]),
+                1,
+                0,
+                "C",
+                fill=True,
+            )
+            pdf.cell(
+                widths[6],
+                6,
+                str(row["Considered Red Days"]),
+                1,
+                0,
+                "C",
+                fill=True,
+            )
+            pdf.cell(
+                widths[7],
+                6,
+                str(row["Days in Month"]),
+                1,
+                0,
+                "C",
+                fill=True,
+            )
             pdf.cell(
                 widths[8],
+                6,
+                f"{row['Per Day']:,.1f}",
+                1,
+                0,
+                "R",
+                fill=True,
+            )
+            pdf.cell(
+                widths[9],
                 6,
                 f"{row['Total Deduction Amount']:,.1f}",
                 1,
                 0,
                 "R",
-            )  # type: ignore
-            pdf.cell(widths[9], 6, f"{row['Total Final Salary']:,.1f}", 1, 0, "R")  # type: ignore
+                fill=True,
+            )
+            pdf.cell(
+                widths[10],
+                6,
+                f"{row['Total Final Salary']:,.1f}",
+                1,
+                0,
+                "R",
+                fill=True,
+            )
             pdf.ln()
+            fill_row = not fill_row
 
-          pdf.ln(3)
+          pdf.ln(4)
 
         pdf_output = bytes(pdf.output())
-
         st.download_button(
-            label="📄 Download PDF Report",
+            label="📄 Download Professional PDF Report",
             data=pdf_output,
             file_name=f"{selected_campus}_Salary_{month_filter}.pdf",
             mime="application/pdf",
@@ -964,7 +1025,6 @@ else:
       selected_employee = st.selectbox(
           "Select Employee for Yearly Ledger", emp_names
       )
-
       yearly_rows = run_query(
           """
                 SELECT month_year, basic_salary, absent_days, late_days, days_in_month, 
@@ -984,7 +1044,6 @@ else:
           tot_ded = net_units * per_day
           p_one = 1 if abs_d == 0 and late_d == 0 else 0
           final_pay = b_sal - tot_ded + (p_one * per_day)
-
           y_data.append({
               "Month": m_yr,
               "Month Index": get_month_index(m_yr),
@@ -994,10 +1053,8 @@ else:
               "Total Deduction": tot_ded,
               "Final Payout": final_pay,
           })
-
         y_df = pd.DataFrame(y_data)
         y_df = y_df.sort_values("Month Index").drop(columns=["Month Index"])
-
         st.markdown(
             f"#### Yearly Financial Record for: **{selected_employee}**"
         )
@@ -1008,16 +1065,15 @@ else:
       st.info("No employee records available for this campus yet.")
 
   elif nav_mode == "Salary Slip Generator":
-    logo_html = ""
-    if os.path.exists("LOGO.png"):
-      with open("LOGO.png", "rb") as f:
-        logo_b64 = base64.b64encode(f.read()).decode()
-        logo_html = f'<img src="data:image/png;base64,{logo_b64}" width="65" style="vertical-align: middle; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); margin-bottom: 8px;">'
-
+    logo_slip = (
+        f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="65" style="vertical-align: middle; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); margin-bottom: 8px;">'
+        if os.path.exists("LOGO.png")
+        else ""
+    )
     st.markdown(
         f"""
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; margin-bottom: 25px;">
-            {logo_html}
+            {logo_slip}
             <div style="font-size: 26px; font-weight: 800; color: #2C1654; margin-bottom: 2px;">EXCELLENCE MODEL SCHOOL</div>
             <div style="font-size: 15px; color: #4B5563; font-weight: 500;">{selected_campus.upper()} BRANCH — Individual Salary Slip ({month_filter})</div>
         </div>
@@ -1115,118 +1171,6 @@ else:
             """,
             unsafe_allow_html=True,
         )
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        slip_pdf = FPDF(orientation="P", unit="mm", format="A4")
-        slip_pdf.add_page()
-        slip_pdf.set_font("Arial", "B", 16)
-        slip_pdf.cell(0, 8, "EXCELLENCE MODEL SCHOOL", 0, 1, "C")
-        slip_pdf.set_font("Arial", "", 10)
-        slip_pdf.cell(
-            0,
-            6,
-            f"Campus: {selected_campus} | Official Salary Slip",
-            0,
-            1,
-            "C",
-        )
-        slip_pdf.ln(5)
-
-        slip_pdf.set_font("Arial", "B", 10)
-        slip_pdf.cell(0, 6, f"Billing Month: {month_filter}", 0, 1, "L")  # type: ignore
-        slip_pdf.cell(
-            0,
-            6,
-            f"Employee Name: {name} (Reg No: {r_no}) [{s_cat}]",
-            0,
-            1,
-            "L",
-        )  # type: ignore
-        slip_pdf.cell(0, 6, f"Designation: {desig}", 0, 1, "L")  # type: ignore
-        slip_pdf.ln(5)
-
-        slip_pdf.set_font("Arial", "B", 10)
-        slip_pdf.cell(90, 7, "Particulars", 1, 0, "L")
-        slip_pdf.cell(100, 7, "Amount (PKR)", 1, 1, "R")
-
-        slip_pdf.set_font("Arial", "", 10)
-        slip_pdf.cell(90, 6, "Basic Salary", 1, 0, "L")
-        slip_pdf.cell(100, 6, f"{b_sal:,.2f}", 1, 1, "R")
-
-        slip_pdf.cell(
-            90,
-            6,
-            f"Absent Days ({abs_d}) - Gross Deduction",
-            1,
-            0,
-            "L",
-        )
-        slip_pdf.cell(100, 6, f"-{absent_gross_amount:,.2f}", 1, 1, "R")
-
-        slip_pdf.cell(
-            90,
-            6,
-            f"Considered Days (Saved/Waived): {cred_d}",
-            1,
-            0,
-            "L",
-        )
-        slip_pdf.cell(100, 6, f"+{cred_amount:,.2f}", 1, 1, "R")
-
-        slip_pdf.cell(
-            90,
-            6,
-            f"Late Days ({late_d} / 3)",
-            1,
-            0,
-            "L",
-        )
-        slip_pdf.cell(100, 6, "-0.00", 1, 1, "R")
-
-        slip_pdf.cell(
-            90,
-            6,
-            "Punctuality Bonus (+1 Day if 0 absence/late)",
-            1,
-            0,
-            "L",
-        )
-        slip_pdf.cell(100, 6, f"+{plus_amount:,.2f}", 1, 1, "R")
-
-        slip_pdf.set_font("Arial", "B", 10)
-        slip_pdf.cell(90, 8, f"Total Deductions (Net)", 1, 0, "L")
-        slip_pdf.cell(100, 8, f"-{tot_ded:,.2f}", 1, 1, "R")
-
-        slip_pdf.cell(90, 8, "Net Final Payout", 1, 0, "L")
-        slip_pdf.cell(100, 8, f"Rs. {final_pay:,.2f}", 1, 1, "R")
-        slip_pdf.ln(10)
-
-        slip_pdf.set_font("Arial", "", 9)
-        slip_pdf.cell(
-            0,
-            6,
-            f"Remarks / Pending Reason: {reason if reason else 'None'}",
-            0,
-            1,
-            "L",
-        )
-        slip_pdf.ln(25)
-
-        slip_pdf.cell(95, 6, "____________________________", 0, 0, "L")
-        slip_pdf.cell(95, 6, "____________________________", 0, 1, "R")
-        slip_pdf.cell(95, 6, "Employee Signature", 0, 0, "L")
-        slip_pdf.cell(95, 6, "Authorized Stamp & Signature", 0, 1, "R")
-
-        slip_pdf_output = bytes(slip_pdf.output())
-
-        st.download_button(
-            label=f"📥 Download {name} Salary Slip (PDF)",
-            data=slip_pdf_output,
-            file_name=f"Salary_Slip_{name.replace(' ', '_')}_{month_filter}.pdf",
-            mime="application/pdf",
-            use_container_width=True,
-        )
     else:
       st.info("No salary records available for this month.")
 
@@ -1246,28 +1190,26 @@ else:
             FROM salaries WHERE month_year = %s GROUP BY campus;
         """
     summary_data = run_query(sum_query, (month_filter,))
-
-    all_q = """
+    all_rows = run_query(
+        """
             SELECT basic_salary, absent_days, late_days, days_in_month, considered_red_days 
             FROM salaries WHERE month_year = %s;
-        """
-    all_rows = run_query(all_q, (month_filter,))
+        """,
+        (month_filter,),
+    )
 
     if summary_data and all_rows:
       total_staff_all = sum([r[1] for r in summary_data])
       total_basic_all = sum([r[2] for r in summary_data])
-
       tot_deductions = 0
       tot_final = 0
       for r in all_rows:
         b_sal, abs_d, late_d, dim, cred_d = r
         per_day = b_sal / dim if dim > 0 else 0
         auto_ded_late = late_d / 3.0
-        total_units = abs_d + auto_ded_late
-        net_units = max(0, total_units - cred_d)
+        net_units = max(0, (abs_d + auto_ded_late) - cred_d)
         total_ded = net_units * per_day
-        auto_p_one = 1 if abs_d == 0 and late_d == 0 else 0
-        f_sal = b_sal - total_ded + (auto_p_one * per_day)
+        f_sal = b_sal - total_ded + ((1 if abs_d == 0 and late_d == 0 else 0) * per_day)
         tot_deductions += total_ded
         tot_final += f_sal
 
@@ -1281,13 +1223,5 @@ else:
         st.metric("Total Deductions", f"Rs. {tot_deductions:,.2f}")
       with k4:
         st.metric("Grand Total Final Payout", f"Rs. {tot_final:,.2f}")
-
-      st.markdown("---")
-      st.subheader("Campus-wise Breakdown")
-      sum_df = pd.DataFrame(
-          summary_data,
-          columns=["Campus Name", "Total Employees", "Total Basic Salary"],
-      )
-      st.dataframe(sum_df, use_container_width=True)
     else:
       st.info("No data entered yet across campuses for summary.")
