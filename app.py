@@ -1,4 +1,7 @@
+import base64
+import io
 import sqlite3
+from fpdf import FPDF
 import pandas as pd
 import streamlit as st
 
@@ -13,7 +16,6 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    /* Main Background & Sidebar Theme matching reference */
     [data-testid="stSidebar"] {
         background-color: #2C1654;
         color: #ffffff;
@@ -37,10 +39,31 @@ st.markdown(
         margin-bottom: 20px;
         font-weight: 500;
     }
+    .logo-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
     </style>
     """,
     unsafe_allow_html=True,
 )
+
+
+# Helper function to display LOGO.png cleanly in main content headers
+def render_main_logo():
+  try:
+    st.markdown(
+        "<div style='text-align: center;'>", unsafe_allow_html=True
+    )
+    st.image("LOGO.png", width=90)
+    st.markdown("</div>", unsafe_allow_html=True)
+  except Exception:
+    st.markdown(
+        "<div style='text-align: center;'><span"
+        " style='font-size:36px;'>🏫</span></div>",
+        unsafe_allow_html=True,
+    )
 
 
 # SQLite Database Connection
@@ -107,7 +130,6 @@ def init_db():
         );
     """)
 
-  # Safe column check/migration for existing databases
   cursor = init_connection().cursor()
   cursor.execute("PRAGMA table_info(employees);")
   columns = [col[1] for col in cursor.fetchall()]
@@ -147,7 +169,6 @@ def get_month_index(m_str):
   return MONTH_ORDER.get(m_str, 7)
 
 
-# Auto-migrate old salary data if employees master is empty
 def auto_migrate_employees():
   campuses = [
       "Kharadar",
@@ -240,13 +261,14 @@ else:
             "Monthly Salary Sheet",
             "Staff Directory (Master & Increment)",
             "Employee Yearly Ledger",
+            "Salary Slip Generator",
             "Summary",
         ],
     )
 
     month_filter = st.selectbox(
-        "Select Month", list(MONTH_ORDER.keys()), index=6
-    )  # Default July 2026
+        "Select Month", list(MONTH_ORDER.keys()), index=7
+    )  # Default August 2026
 
     st.markdown("---")
     if st.button("🚪 Secure Logout", use_container_width=True):
@@ -255,6 +277,7 @@ else:
 
   # 1. STAFF DIRECTORY / MASTER MANAGEMENT TAB
   if nav_mode == "Staff Directory (Master & Increment)":
+    render_main_logo()
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
@@ -372,11 +395,7 @@ else:
 
   # 2. MONTHLY SALARY SHEET TAB
   elif nav_mode == "Monthly Salary Sheet":
-    st.markdown(
-        "<div style='text-align: center;'><span"
-        " style='font-size:32px;'>🎓</span></div>",
-        unsafe_allow_html=True,
-    )
+    render_main_logo()
     st.markdown(
         f"<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
@@ -539,7 +558,7 @@ else:
         },
     )
 
-    col_save, col_dl = st.columns([1, 1])
+    col_save, col_dl, col_pdf = st.columns([1, 1, 1])
     with col_save:
       if st.button("💾 Save Changes to Database", use_container_width=True):
         execute_non_query(
@@ -589,10 +608,82 @@ else:
       if existing_rows:
         csv = display_df.to_csv(index=False).encode("utf-8")
         st.download_button(
-            label="📥 Download CSV / Excel Report",
+            label="📥 Download CSV Report",
             data=csv,
             file_name=f"{selected_campus}_Salary_{month_filter}.csv",
             mime="text/csv",
+            use_container_width=True,
+        )
+
+    with col_pdf:
+      if existing_rows:
+        # PDF Generation for Monthly Sheet
+        pdf = FPDF(orientation="L", unit="mm", format="A4")
+        pdf.add_page()
+        pdf.set_font("Arial", "B", 14)
+        pdf.cell(
+            0,
+            8,
+            "EXCELLENCE MODEL SCHOOL - CONSOLIDATED SALARY REPORT",
+            0,
+            1,
+            "C",
+        )
+        pdf.set_font("Arial", "", 10)
+        pdf.cell(
+            0,
+            6,
+            f"Campus: {selected_campus} | Month: {month_filter}",
+            0,
+            1,
+            "C",
+        )
+        pdf.ln(5)
+
+        # Table Header
+        pdf.set_font("Arial", "B", 8)
+        cols = [
+            "Reg No",
+            "Name",
+            "Designation",
+            "Basic",
+            "Absent",
+            "Late",
+            "Days",
+            "Per Day",
+            "Deduction",
+            "Final Pay",
+        ]
+        widths = [20, 45, 40, 22, 18, 18, 18, 22, 25, 25]
+        for i, col in enumerate(cols):
+          pdf.cell(widths[i], 7, col, 1, 0, "C")
+        pdf.ln()
+
+        # Table Rows
+        pdf.set_font("Arial", "", 8)
+        for idx, row in display_df.iterrows():
+          pdf.cell(
+              widths[0], 6, str(row["Reg No"]), 1, 0, "C"
+          )  # type: ignore
+          pdf.cell(widths[1], 6, str(row["Name"])[:25], 1, 0, "L")  # type: ignore
+          pdf.cell(widths[2], 6, str(row["Designation"])[:22], 1, 0, "L")  # type: ignore
+          pdf.cell(widths[3], 6, f"{row['Basic Salary']:,.0f}", 1, 0, "R")  # type: ignore
+          pdf.cell(widths[4], 6, str(row["Absent Days"]), 1, 0, "C")  # type: ignore
+          pdf.cell(widths[5], 6, str(row["Late Days"]), 1, 0, "C")  # type: ignore
+          pdf.cell(widths[6], 6, str(row["Days in Month"]), 1, 0, "C")  # type: ignore
+          pdf.cell(widths[7], 6, f"{row['Per Day']:,.1f}", 1, 0, "R")  # type: ignore
+          pdf.cell(
+              widths[8], 6, f"{row['Total Deduction Amount']:,.1f}", 1, 0, "R"
+          )  # type: ignore
+          pdf.cell(widths[9], 6, f"{row['Total Final Salary']:,.1f}", 1, 0, "R")  # type: ignore
+          pdf.ln()
+
+        pdf_output = pdf.output(dest="S").encode("latin1")
+        st.download_button(
+            label="📄 Download PDF Report",
+            data=pdf_output,
+            file_name=f"{selected_campus}_Salary_{month_filter}.pdf",
+            mime="application/pdf",
             use_container_width=True,
         )
 
@@ -616,6 +707,7 @@ else:
 
   # 3. EMPLOYEE YEARLY LEDGER & CHARTS TAB
   elif nav_mode == "Employee Yearly Ledger":
+    render_main_logo()
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
@@ -626,7 +718,6 @@ else:
         unsafe_allow_html=True,
     )
 
-    # Fetch unique employee names for dropdown
     emp_names_raw = run_query(
         "SELECT DISTINCT name FROM salaries WHERE campus = ? ORDER BY name;",
         (selected_campus,),
@@ -638,7 +729,6 @@ else:
           "Select Employee for Yearly Ledger", emp_names
       )
 
-      # Fetch all months data for this employee
       yearly_rows = run_query(
           """
                 SELECT month_year, basic_salary, absent_days, late_days, days_in_month, 
@@ -677,7 +767,6 @@ else:
         )
         st.dataframe(y_df, use_container_width=True)
 
-        # Charts Section
         st.markdown("#### 📈 Yearly Salary & Deduction Trend")
         chart_df = y_df.set_index("Month")[["Basic Salary", "Final Payout"]]
         st.line_chart(chart_df)
@@ -701,13 +790,203 @@ else:
           " monthly salary sheets first."
       )
 
-  # 4. NETWORK SUMMARY TAB
-  elif nav_mode == "Summary":
+  # 4. INDIVIDUAL SALARY SLIP GENERATOR TAB
+  elif nav_mode == "Salary Slip Generator":
+    render_main_logo()
     st.markdown(
-        "<div style='text-align: center;'><span"
-        " style='font-size:32px;'>📈</span></div>",
+        "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
     )
+    st.markdown(
+        f"<div class='sub-header'>{selected_campus.upper()} BRANCH — Individual"
+        f" Salary Slip ({month_filter})</div>",
+        unsafe_allow_html=True,
+    )
+
+    slip_emps = run_query(
+        """
+            SELECT reg_no, name, designation, basic_salary, absent_days, late_days, 
+                   days_in_month, considered_red_days, reason 
+            FROM salaries WHERE campus = ? AND month_year = ? ORDER BY name;
+        """,
+        (selected_campus, month_filter),
+    )
+
+    if slip_emps:
+      emp_dict = {row[1]: row for row in slip_emps}
+      selected_slip_name = st.selectbox(
+          "Select Employee for Salary Slip", list(emp_dict.keys())
+      )
+
+      if selected_slip_name:
+        r_no, name, desig, b_sal, abs_d, late_d, dim, cred_d, reason = emp_dict[
+            selected_slip_name
+        ]
+        per_day = b_sal / dim if dim > 0 else 0
+        auto_ded_late = late_d / 3.0
+        tot_units = abs_d + auto_ded_late
+        net_units = max(0, tot_units - cred_d)
+        tot_ded = net_units * per_day
+        p_one = 1 if abs_d == 0 and late_d == 0 else 0
+        plus_amount = p_one * per_day
+        final_pay = b_sal - tot_ded + plus_amount
+
+        # On-screen Salary Slip Preview Box
+        st.markdown(
+            f"""
+            <div style="border: 2px solid #2C1654; padding: 25px; border-radius: 10px; background-color: #ffffff; color: #000000; max-width: 700px; margin: auto;">
+                <h3 style="text-align: center; color: #2C1654; margin-bottom: 0;">EXCELLENCE MODEL SCHOOL</h3>
+                <p style="text-align: center; font-size: 13px; color: gray;">Campus: {selected_campus} | Salary Slip for {month_filter}</p>
+                <hr style="border: 1px solid #2C1654;">
+                <table style="width: 100%; font-size: 14px; margin-bottom: 15px;">
+                    <tr>
+                        <td><b>Employee Name:</b> {name}</td>
+                        <td><b>Reg No:</b> {r_no}</td>
+                    </tr>
+                    <tr>
+                        <td><b>Designation:</b> {desig}</td>
+                        <td><b>Month:</b> {month_filter}</td>
+                    </tr>
+                </table>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;" border="1">
+                    <tr style="background-color: #2C1654; color: white;">
+                        <th style="padding: 6px; text-align: left;">Earnings / Particulars</th>
+                        <th style="padding: 6px; text-align: right;">Amount (Rs.)</th>
+                        <th style="padding: 6px; text-align: left;">Deductions / Details</th>
+                        <th style="padding: 6px; text-align: right;">Amount (Rs.)</th>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px;">Basic Salary</td>
+                        <td style="padding: 6px; text-align: right;">{b_sal:,.2f}</td>
+                        <td style="padding: 6px;">Absent Days ({abs_d})</td>
+                        <td style="padding: 6px; text-align: right;">-</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px;">Punctuality Bonus (+1)</td>
+                        <td style="padding: 6px; text-align: right;">{plus_amount:,.2f}</td>
+                        <td style="padding: 6px;">Late Days ({late_d} / 3)</td>
+                        <td style="padding: 6px; text-align: right;">-</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px;">-</td>
+                        <td style="padding: 6px; text-align: right;">-</td>
+                        <td style="padding: 6px;">Total Deductions</td>
+                        <td style="padding: 6px; text-align: right; color: red;">{tot_ded:,.2f}</td>
+                    </tr>
+                    <tr style="background-color: #f3f4f6; font-weight: bold;">
+                        <td style="padding: 8px;">Gross Total</td>
+                        <td style="padding: 8px; text-align: right;">{(b_sal + plus_amount):,.2f}</td>
+                        <td style="padding: 8px;">Net Final Payout</td>
+                        <td style="padding: 8px; text-align: right; color: green;">Rs. {final_pay:,.2f}</td>
+                    </tr>
+                </table>
+                <p style="font-size: 12px; margin-top: 15px; color: gray;"><b>Remarks/Pending Reason:</b> {reason if reason else 'None'}</p>
+                <div style="display: flex; justify-content: space-between; margin-top: 40px; font-size: 13px;">
+                    <span>_________________________<br>Employee Signature</span>
+                    <span>_________________________<br>Authorized Stamp & Sign</span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # PDF Download for Individual Slip
+        slip_pdf = FPDF(orientation="P", unit="mm", format="A4")
+        slip_pdf.add_page()
+        slip_pdf.set_font("Arial", "B", 16)
+        slip_pdf.cell(0, 8, "EXCELLENCE MODEL SCHOOL", 0, 1, "C")
+        slip_pdf.set_font("Arial", "", 10)
+        slip_pdf.cell(
+            0,
+            6,
+            f"Campus: {selected_campus} | Official Salary Slip",
+            0,
+            1,
+            "C",
+        )
+        slip_pdf.ln(5)
+
+        slip_pdf.set_font("Arial", "B", 10)
+        slip_pdf.cell(
+            0, 6, f"Billing Month: {month_filter}", 0, 1, "L"
+        )  # type: ignore
+        slip_pdf.cell(
+            0, 6, f"Employee Name: {name} (Reg No: {r_no})", 0, 1, "L"
+        )  # type: ignore
+        slip_pdf.cell(
+            0, 6, f"Designation: {desig}", 0, 1, "L"
+        )  # type: ignore
+        slip_pdf.ln(5)
+
+        # Slip Table Header
+        slip_pdf.set_font("Arial", "B", 10)
+        slip_pdf.cell(90, 7, "Particulars", 1, 0, "L")
+        slip_pdf.cell(100, 7, "Amount (PKR)", 1, 1, "R")
+
+        slip_pdf.set_font("Arial", "", 10)
+        slip_pdf.cell(90, 6, "Basic Salary", 1, 0, "L")
+        slip_pdf.cell(100, 6, f"{b_sal:,.2f}", 1, 1, "R")
+
+        slip_pdf.cell(
+            90,
+            6,
+            f"Attendance Adjustments (Absent: {abs_d}, Late: {late_d})",
+            1,
+            0,
+            "L",
+        )
+        slip_pdf.cell(100, 6, f"-{tot_ded:,.2f}", 1, 1, "R")
+
+        slip_pdf.cell(
+            90,
+            6,
+            "Punctuality Bonus (+1 Day if 0 absence/late)",
+            1,
+            0,
+            "L",
+        )
+        slip_pdf.cell(100, 6, f"+{plus_amount:,.2f}", 1, 1, "R")
+
+        slip_pdf.set_font("Arial", "B", 10)
+        slip_pdf.cell(90, 8, "Net Final Payout", 1, 0, "L")
+        slip_pdf.cell(100, 8, f"Rs. {final_pay:,.2f}", 1, 1, "R")
+        slip_pdf.ln(10)
+
+        slip_pdf.set_font("Arial", "", 9)
+        slip_pdf.cell(
+            0,
+            6,
+            f"Remarks / Pending Reason: {reason if reason else 'None'}",
+            0,
+            1,
+            "L",
+        )
+        slip_pdf.ln(25)
+
+        slip_pdf.cell(95, 6, "____________________________", 0, 0, "L")
+        slip_pdf.cell(95, 6, "____________________________", 0, 1, "R")
+        slip_pdf.cell(95, 6, "Employee Signature", 0, 0, "L")
+        slip_pdf.cell(95, 6, "Authorized Stamp & Signature", 0, 1, "R")
+
+        slip_pdf_output = slip_pdf.output(dest="S").encode("latin1")
+        st.download_button(
+            label=f"📥 Download {name} Salary Slip (PDF)",
+            data=slip_pdf_output,
+            file_name=f"Salary_Slip_{name.replace(' ', '_')}_{month_filter}.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
+    else:
+      st.info(
+          "No salary records available for this month. Please generate or save"
+          " the Monthly Salary Sheet first."
+      )
+
+  # 5. NETWORK SUMMARY TAB
+  elif nav_mode == "Summary":
+    render_main_logo()
     st.markdown(
         "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
         unsafe_allow_html=True,
