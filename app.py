@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Professional Enterprise Deep Navy Theme Custom Styling (Matched with CleanTask Reference Image)
+# Professional Enterprise Deep Navy Theme Custom Styling
 st.markdown(
     """
     <style>
@@ -28,7 +28,6 @@ st.markdown(
     [data-testid="stSidebar"] div {
         color: #e5e7eb !important;
     }
-    /* Clean Styling for Navigation Radio Options */
     [data-testid="stSidebar"] .stRadio {
         margin-top: 5px;
     }
@@ -47,7 +46,6 @@ st.markdown(
         background-color: rgba(255, 255, 255, 0.05);
         border-color: rgba(255, 255, 255, 0.1);
     }
-    /* Active selection highlight matching the blue button in reference */
     [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label[data-checked="true"] {
         background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
         border-color: #3b82f6;
@@ -269,7 +267,6 @@ if not st.session_state.authenticated:
         st.error("Invalid Password! Please try again.")
 else:
   with st.sidebar:
-    # Logo & Brand Header like reference image "CleanTask"
     logo_sidebar = (
         f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="34" style="border-radius: 6px; vertical-align: middle; margin-right: 8px;">'
         if os.path.exists("LOGO.png")
@@ -285,7 +282,6 @@ else:
         unsafe_allow_html=True,
     )
 
-    # Search Bar inside Sidebar matching reference
     st.text_input(
         "Search", placeholder="Search...", label_visibility="collapsed"
     )
@@ -302,7 +298,6 @@ else:
         ],
     )
 
-    # Navigation options mapped with clean icons mimicking the reference layout
     nav_mode = st.radio(
         "Main Navigation",
         [
@@ -316,7 +311,6 @@ else:
         label_visibility="collapsed",
     )
 
-    # Strip custom icon prefixes to match backend logic seamlessly
     clean_nav_mode = nav_mode.split(" ", 1)[1] if " " in nav_mode else nav_mode
 
     month_filter = st.selectbox(
@@ -324,7 +318,6 @@ else:
     )
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Database Storage Widget matching "Used Space" card in reference image
     st.markdown(
         """
         <div style="background-color: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); padding: 14px; border-radius: 12px; margin-bottom: 15px;">
@@ -342,7 +335,7 @@ else:
         unsafe_allow_html=True,
     )
 
-    # User Profile Section matching the bottom footer of reference image
+    # Updated Footer Section with SSKAZAMA
     st.markdown(
         """
         <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 5px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
@@ -350,7 +343,7 @@ else:
                 <div style="background-color: #3b82f6; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px;">MT</div>
                 <div>
                     <div style="font-size: 13px; font-weight: 600; color: #ffffff;">Muhammad Tahir</div>
-                    <div style="font-size: 10px; color: #9ca3af;">Admin Portal</div>
+                    <div style="font-size: 10px; color: #9ca3af;">SSKAZAMA</div>
                 </div>
             </div>
         </div>
