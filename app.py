@@ -195,7 +195,6 @@ else:
       df["Considered Red Days"] = pd.to_numeric(
           df["Considered Red Days"]
       ).fillna(0)
-      df["Plus 1"] = pd.to_numeric(df["Plus 1"]).fillna(0)
 
       # Per Day Calculation
       df["Per Day"] = df.apply(
@@ -220,6 +219,12 @@ else:
       )
 
       df["Total Deduction Amount"] = df["Net Deduction Units"] * df["Per Day"]
+
+      # AUTOMATIC PLUS 1 RULE: If 0 Absent Days and 0 Late Days, Plus 1 becomes 1 automatically
+      df["Plus 1"] = df.apply(
+          lambda row: 1 if row["Absent Days"] == 0 and row["Late Days"] == 0 else 0,
+          axis=1,
+      )
 
       # Final Salary Calculation
       df["Final Salary"] = (
@@ -277,6 +282,13 @@ else:
           if pd.isna(row["Name"]) or str(row["Name"]).strip() == "":
             continue
 
+          # Re-calculate Plus 1 for saving to database based on editor values
+          abs_val = (
+              float(row["Absent Days"]) if pd.notna(row["Absent Days"]) else 0
+          )
+          late_val = float(row["Late Days"]) if pd.notna(row["Late Days"]) else 0
+          p_one_val = 1 if abs_val == 0 and late_val == 0 else 0
+
           insert_query = """
                         INSERT INTO salaries (campus, reg_no, name, designation, basic_salary, absent_days, 
                                               late_days, deduction_late, days_in_month, considered_red_days, plus_one, reason, month_year)
@@ -294,10 +306,8 @@ else:
                   float(row["Basic Salary"])
                   if pd.notna(row["Basic Salary"])
                   else 0,
-                  float(row["Absent Days"])
-                  if pd.notna(row["Absent Days"])
-                  else 0,
-                  float(row["Late Days"]) if pd.notna(row["Late Days"]) else 0,
+                  abs_val,
+                  late_val,
                   float(row["Deduction Late"])
                   if pd.notna(row["Deduction Late"])
                   else 0,
@@ -307,7 +317,7 @@ else:
                   float(row["Considered Red Days"])
                   if pd.notna(row["Considered Red Days"])
                   else 0,
-                  float(row["Plus 1"]) if pd.notna(row["Plus 1"]) else 0,
+                  p_one_val,
                   str(row["Reason of Pending"])
                   if pd.notna(row["Reason of Pending"])
                   else "",
@@ -315,7 +325,7 @@ else:
               ),
           )
         st.success(
-            "✅ Records and automatic 3-late=1-absent formulas updated!"
+            "✅ Records and automatic Plus 1 attendance bonus updated!"
         )
         st.rerun()
 
@@ -389,7 +399,8 @@ else:
         total_units = abs_d + auto_ded_late
         net_units = max(0, total_units - cred_d)
         total_ded = net_units * per_day
-        f_sal = b_sal - total_ded + (p_one * per_day)
+        auto_p_one = 1 if abs_d == 0 and late_d == 0 else 0
+        f_sal = b_sal - total_ded + (auto_p_one * per_day)
         tot_deductions += total_ded
         tot_final += f_sal
 
