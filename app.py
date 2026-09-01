@@ -617,7 +617,7 @@ else:
               "Late Days",
               "Days in Month",
               "Considered Red Days",
-              "Reason of Pending",
+              "Remarks",
           ],
       )
       df["Basic Salary"] = pd.to_numeric(df["Basic Salary"]).fillna(0)
@@ -670,7 +670,7 @@ else:
               "Total Deduction Amount",
               "Plus 1",
               "Total Final Salary",
-              "Reason of Pending",
+              "Remarks",
           ]
       ]
     else:
@@ -689,7 +689,7 @@ else:
               "Total Deduction Amount",
               "Plus 1",
               "Total Final Salary",
-              "Reason of Pending",
+              "Remarks",
           ]
       )
 
@@ -780,9 +780,7 @@ else:
                   float(row["Considered Red Days"])
                   if pd.notna(row["Considered Red Days"])
                   else 0,
-                  str(row["Reason of Pending"])
-                  if pd.notna(row["Reason of Pending"])
-                  else "",
+                  str(row["Remarks"]) if pd.notna(row["Remarks"]) else "",
                   month_filter,
               ),
           )
@@ -868,14 +866,15 @@ else:
               "Per Day",
               "Deduction",
               "Final Pay",
+              "Remarks",
           ]
-          widths = [18, 42, 38, 20, 14, 14, 22, 14, 20, 22, 23]
+          widths = [16, 38, 32, 18, 12, 12, 18, 12, 18, 18, 20, 43]
 
           for i, col in enumerate(cols):
             pdf.cell(widths[i], 7, col, 1, 0, "C", fill=True)
           pdf.ln()
 
-          pdf.set_font("Arial", "", 8.5)
+          pdf.set_font("Arial", "", 8)
           pdf.set_text_color(0, 0, 0)
           fill_row = False
 
@@ -894,9 +893,9 @@ else:
               pdf.set_fill_color(255, 255, 255)
 
             pdf.cell(widths[0], 6, str(row["Reg No"]), 1, 0, "C", fill=True)
-            pdf.cell(widths[1], 6, str(row["Name"])[:23], 1, 0, "L", fill=True)
+            pdf.cell(widths[1], 6, str(row["Name"])[:20], 1, 0, "L", fill=True)
             pdf.cell(
-                widths[2], 6, str(row["Designation"])[:20], 1, 0, "L", fill=True
+                widths[2], 6, str(row["Designation"])[:18], 1, 0, "L", fill=True
             )
             pdf.cell(
                 widths[3],
@@ -942,6 +941,15 @@ else:
                 "R",
                 fill=True,
             )
+            pdf.cell(
+                widths[11],
+                6,
+                str(row["Remarks"])[:28] if pd.notna(row["Remarks"]) else "",
+                1,
+                0,
+                "L",
+                fill=True,
+            )
             pdf.ln()
             fill_row = not fill_row
 
@@ -952,6 +960,7 @@ else:
           pdf.cell(sum(widths[4:9]), 6, "", 1, 0, "C", fill=True)
           pdf.cell(widths[9], 6, f"{sub_ded:,.2f}", 1, 0, "R", fill=True)
           pdf.cell(widths[10], 6, f"{sub_final:,.2f}", 1, 0, "R", fill=True)
+          pdf.cell(widths[11], 6, "", 1, 0, "C", fill=True)
           pdf.ln(8)
 
         pdf.set_font("Arial", "B", 10)
@@ -1280,7 +1289,7 @@ else:
                         <td style="padding: 8px; text-align: right; color: green;">Rs. {final_pay:,.2f}</td>
                     </tr>
                 </table>
-                <p style="font-size: 12px; margin-top: 15px; color: gray;"><b>Remarks/Pending Reason:</b> {reason if reason else 'None'}</p>
+                <p style="font-size: 12px; margin-top: 15px; color: gray;"><b>Remarks:</b> {reason if reason else 'None'}</p>
                 <div style="display: flex; justify-content: space-between; margin-top: 40px; font-size: 13px;">
                     <span>_________________________<br>Employee Signature</span>
                     <span>_________________________<br>Authorized Stamp & Sign</span>
