@@ -268,24 +268,19 @@ if not st.session_state.authenticated:
 else:
   with st.sidebar:
     logo_sidebar = (
-        f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="34" style="border-radius: 6px; vertical-align: middle; margin-right: 8px;">'
+        f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="32" style="border-radius: 6px; vertical-align: middle; margin-right: 8px;">'
         if os.path.exists("LOGO.png")
-        else '<span style="font-size: 22px; vertical-align: middle; margin-right: 8px;">🎓</span>'
+        else '<span style="font-size: 20px; vertical-align: middle; margin-right: 8px;">🎓</span>'
     )
     st.markdown(
         f"""
         <div style="display: flex; align-items: center; padding: 4px 0 12px 0;">
             {logo_sidebar}
-            <span style="font-size: 20px; color: #ffffff; font-weight: 800; letter-spacing: 0.5px;">CleanTask</span>
+            <span style="font-size: 14px; color: #ffffff; font-weight: 700; line-height: 1.2;">EXCELLENCE MODEL SCHOOL</span>
         </div>
         """,
         unsafe_allow_html=True,
     )
-
-    st.text_input(
-        "Search", placeholder="Search...", label_visibility="collapsed"
-    )
-    st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
 
     selected_campus = st.selectbox(
         "Select Campus",
