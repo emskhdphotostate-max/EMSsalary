@@ -1512,4 +1512,3 @@ else:
         st.metric("Grand Total Final Payout", f"Rs. {tot_final:,.0f}")
     else:
       st.info("No data entered yet across campuses for summary.")
-[cite: 1]
