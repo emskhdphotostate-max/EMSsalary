@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Professional Enterprise Deep Navy Theme Custom Styling
+# Professional Enterprise Deep Navy Theme Custom Styling with VIP Login Card
 st.markdown(
     """
     <style>
@@ -86,6 +86,54 @@ st.markdown(
         margin-bottom: 10px;
         border-bottom: 2px solid #111827;
         padding-bottom: 4px;
+    }
+    
+    /* VIP Login Background & Container Customization */
+    .stApp {
+        background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0b1329 100%);
+        background-attachment: fixed;
+    }
+    .login-card {
+        background: rgba(17, 24, 39, 0.85);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 40px 35px;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(37, 99, 235, 0.2);
+        text-align: center;
+        margin-top: 30px;
+    }
+    .login-title {
+        color: #ffffff;
+        font-size: 24px;
+        font-weight: 800;
+        margin-top: 15px;
+        letter-spacing: 0.5px;
+    }
+    .login-subtitle {
+        color: #94a3b8;
+        font-size: 14px;
+        font-weight: 500;
+        margin-top: 5px;
+        margin-bottom: 25px;
+    }
+    /* Style Streamlit inputs inside login card */
+    .login-card label {
+        color: #e2e8f0 !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+    }
+    .login-card input {
+        background-color: rgba(15, 23, 42, 0.9) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 10px !important;
+        padding: 12px !important;
+    }
+    .login-card input:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.4) !important;
     }
     </style>
     """,
@@ -230,41 +278,41 @@ if "authenticated" not in st.session_state:
 
 if not st.session_state.authenticated:
   logo_html = (
-      f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="90" style="margin-bottom: 10px; border-radius: 10px; box-shadow: 0 3px 8px rgba(0,0,0,0.15);">'
+      f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="85" style="border-radius: 14px; box-shadow: 0 4px 15px rgba(37,99,235,0.4); border: 2px solid rgba(255,255,255,0.15);">'
       if os.path.exists("LOGO.png")
       else '<h1 style="margin:0;">🎓</h1>'
   )
-  st.markdown(
-      f"""
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; margin-top: 40px; margin-bottom: 20px;">
-            {logo_html}
-            <h1 style="color: #111827; margin: 5px 0 0 0; font-weight: 800; font-size: 32px;">EXCELLENCE MODEL SCHOOL</h1>
-            <p style="color: #4B5563; font-weight: 600; font-size: 16px; margin-top: 5px;">Salary Management ERP Portal</p>
-        </div>
-        """,
-      unsafe_allow_html=True,
-  )
 
-  col1, col2, col3 = st.columns([1, 1.2, 1])
+  col1, col2, col3 = st.columns([1, 1.4, 1])
   with col2:
     st.markdown(
-        """
-        <div style="background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 6px 20px rgba(17,24,39,0.08); border: 1px solid #e5e7eb;">
-            <h3 style="color: #111827; text-align: center; margin-bottom: 20px; font-size: 20px; font-weight: 700;">🔒 Secure System Login</h3>
+        f"""
+        <div class="login-card">
+            {logo_html}
+            <div class="login-title">EXCELLENCE MODEL SCHOOL</div>
+            <div class="login-subtitle">Salary Management ERP Portal</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    password_input = st.text_input(
-        "Enter Password", type="password", key="login_pass"
-    )
-    if st.button("Login to Portal", use_container_width=True, type="primary"):
-      if password_input == "namuka112":
-        st.session_state.authenticated = True
-        st.success("Login Successful!")
-        st.rerun()
-      else:
-        st.error("Invalid Password! Please try again.")
+
+    # Use a container for the input elements to sit nicely below/within the visual design flow
+    with st.container():
+      password_input = st.text_input(
+          "🔒 Enter Secure System Password",
+          type="password",
+          key="login_pass",
+          placeholder="Enter access password...",
+      )
+      if st.button(
+          "🚀 Login to ERP Portal", use_container_width=True, type="primary"
+      ):
+        if password_input == "namuka112":
+          st.session_state.authenticated = True
+          st.success("Login Successful!")
+          st.rerun()
+        else:
+          st.error("⚠️ Invalid Password! Please try again.")
 else:
   with st.sidebar:
     logo_sidebar = (
@@ -874,7 +922,6 @@ else:
                   month_filter,
               ),
           )
-          # Also sync name/designation/reg_no update back to master employees table if needed
           execute_non_query(
               """
                         UPDATE employees SET name = %s, designation = %s, staff_category = %s 
@@ -1098,14 +1145,7 @@ else:
 
         pdf.set_font("Arial", "B", 13)
         pdf.set_text_color(17, 24, 39)
-        pdf.cell(
-            0,
-            8,
-            f"SUMMARY (SALARY) - {month_filter}",
-            0,
-            1,
-            "C",
-        )
+        pdf.cell(0, 8, f"SUMMARY (SALARY) - {month_filter}", 0, 1, "C")
         pdf.ln(3)
 
         pdf.set_font("Arial", "B", 9)
@@ -1472,3 +1512,4 @@ else:
         st.metric("Grand Total Final Payout", f"Rs. {tot_final:,.0f}")
     else:
       st.info("No data entered yet across campuses for summary.")
+```[cite: 1]
