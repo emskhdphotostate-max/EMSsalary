@@ -14,143 +14,98 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Professional Deep Purple Gradient Theme Custom Styling with Spacious VIP Login Card
-st.markdown(
-    """
-    <style>
-    [data-testid="stSidebar"] {
-        background-color: #0b1329;
-        color: #9ca3af;
-        border-right: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    [data-testid="stSidebar"] .stSelectbox label, 
-    [data-testid="stSidebar"] .stRadio label, 
-    [data-testid="stSidebar"] div {
-        color: #e5e7eb !important;
-    }
-    [data-testid="stSidebar"] .stRadio {
-        margin-top: 5px;
-    }
-    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] {
-        gap: 6px !important;
-    }
-    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label {
-        background-color: transparent;
-        padding: 9px 12px;
-        border-radius: 8px;
-        border: 1px solid transparent;
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label:hover {
-        background-color: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-    }
-    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label[data-checked="true"] {
-        background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
-        border-color: #8b5cf6;
-        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
-    }
-    [data-testid="stSidebar"] button {
-        color: #ffffff !important;
-        background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
-        font-weight: 600;
-        border-radius: 8px !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        box-shadow: 0 2px 6px rgba(124, 58, 237, 0.3);
-        transition: all 0.2s ease;
-    }
-    [data-testid="stSidebar"] button:hover {
-        background: linear-gradient(135deg, #6d28d9 0%, #4338ca 100%) !important;
-        box-shadow: 0 4px 10px rgba(124, 58, 237, 0.5);
-    }
-    .main-header {
-        font-size: 26px;
-        font-weight: 800;
-        color: #111827;
-        text-align: center;
-        margin-bottom: 2px;
-    }
-    .sub-header {
-        font-size: 15px;
-        color: #4B5563;
-        text-align: center;
-        margin-bottom: 20px;
-        font-weight: 500;
-    }
-    .section-title {
-        font-size: 18px;
-        font-weight: 700;
-        color: #111827;
-        margin-top: 25px;
-        margin-bottom: 10px;
-        border-bottom: 2px solid #111827;
-        padding-bottom: 4px;
-    }
-    
-    /* Spacious Deep Purple Gradient Login Screen Styling */
-    .stApp {
-        background: radial-gradient(circle at 50% 20%, #311042 0%, #0f071a 100%);
-        background-attachment: fixed;
-    }
-    .login-wrapper {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        padding-top: 40px;
-    }
-    .login-card {
-        background: linear-gradient(145deg, rgba(30, 18, 48, 0.92) 0%, rgba(18, 10, 32, 0.95) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1.5px solid rgba(168, 85, 247, 0.25);
-        padding: 55px 50px;
-        border-radius: 24px;
-        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 35px rgba(147, 51, 234, 0.25);
-        text-align: center;
-        width: 100%;
-        max-width: 520px;
-        margin: auto;
-    }
-    .login-title {
-        color: #f3e8ff;
-        font-size: 28px;
-        font-weight: 800;
-        margin-top: 18px;
-        letter-spacing: 0.8px;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    .login-subtitle {
-        color: #d8b4fe;
-        font-size: 15px;
-        font-weight: 500;
-        margin-top: 8px;
-        margin-bottom: 35px;
-        letter-spacing: 0.3px;
-    }
-    /* Explicit high-contrast text styling for Streamlit inputs inside login card */
-    .stTextInput label p {
-        color: #f3e8ff !important;
-        font-weight: 600 !important;
-        font-size: 15px !important;
-    }
-    .login-card input {
-        background-color: rgba(15, 7, 26, 0.95) !important;
-        color: #ffffff !important;
-        border: 1px solid rgba(168, 85, 247, 0.4) !important;
-        border-radius: 12px !important;
-        padding: 14px 16px !important;
-        font-size: 16px !important;
-    }
-    .login-card input:focus {
-        border-color: #a855f7 !important;
-        box-shadow: 0 0 15px rgba(168, 85, 247, 0.5) !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+# Professional Styling: Dark background ONLY for login, clean light theme for ERP dashboard
+if "authenticated" not in st.session_state:
+  st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+  st.markdown(
+      """
+        <style>
+        .stApp {
+            background: radial-gradient(circle at 50% 20%, #311042 0%, #0f071a 100%);
+            background-attachment: fixed;
+        }
+        .login-card {
+            background: linear-gradient(145deg, rgba(30, 18, 48, 0.92) 0%, rgba(18, 10, 32, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1.5px solid rgba(168, 85, 247, 0.25);
+            padding: 55px 50px;
+            border-radius: 24px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 35px rgba(147, 51, 234, 0.25);
+            text-align: center;
+            width: 100%;
+            max-width: 520px;
+            margin: auto;
+        }
+        .login-title {
+            color: #f3e8ff;
+            font-size: 28px;
+            font-weight: 800;
+            margin-top: 18px;
+            letter-spacing: 0.8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .login-subtitle {
+            color: #d8b4fe;
+            font-size: 15px;
+            font-weight: 500;
+            margin-top: 8px;
+            margin-bottom: 35px;
+            letter-spacing: 0.3px;
+        }
+        .stTextInput label p {
+            color: #f3e8ff !important;
+            font-weight: 600 !important;
+            font-size: 15px !important;
+        }
+        .login-card input {
+            background-color: rgba(15, 7, 26, 0.95) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(168, 85, 247, 0.4) !important;
+            border-radius: 12px !important;
+            padding: 14px 16px !important;
+            font-size: 16px !important;
+        }
+        </style>
+        """,
+      unsafe_allow_html=True,
+  )
+else:
+  st.markdown(
+      """
+        <style>
+        .stApp {
+            background-color: #ffffff;
+        }
+        .main-header {
+            font-size: 26px;
+            font-weight: 800;
+            color: #111827;
+            text-align: center;
+            margin-bottom: 2px;
+        }
+        .sub-header {
+            font-size: 15px;
+            color: #4B5563;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #111827;
+            padding-bottom: 4px;
+        }
+        </style>
+        """,
+      unsafe_allow_html=True,
+  )
 
 
 def init_connection():
@@ -285,9 +240,6 @@ def get_month_index(m_str):
   return MONTH_ORDER.get(m_str, 7)
 
 
-if "authenticated" not in st.session_state:
-  st.session_state.authenticated = False
-
 if not st.session_state.authenticated:
   logo_html = (
       f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="105" style="border-radius: 16px; box-shadow: 0 6px 20px rgba(147,51,234,0.5); border: 2px solid rgba(216,180,254,0.3);">'
@@ -316,8 +268,15 @@ if not st.session_state.authenticated:
           key="login_pass",
           placeholder="Enter access password...",
       )
-      if st.button(
-          "🚀 Login to ERP Portal", use_container_width=True, type="primary"
+      is_enter_pressed = (
+          st.session_state.get("login_pass", "") == "namuka112"
+          and password_input == "namuka112"
+      )
+      if (
+          st.button(
+              "🚀 Login to ERP Portal", use_container_width=True, type="primary"
+          )
+          or is_enter_pressed
       ):
         if password_input == "namuka112":
           st.session_state.authenticated = True
@@ -336,7 +295,7 @@ else:
         f"""
         <div style="display: flex; align-items: center; padding: 4px 0 12px 0;">
             {logo_sidebar}
-            <span style="font-size: 14px; color: #ffffff; font-weight: 700; line-height: 1.2;">EXCELLENCE MODEL SCHOOL</span>
+            <span style="font-size: 14px; color: #111827; font-weight: 700; line-height: 1.2;">EXCELLENCE MODEL SCHOOL</span>
         </div>
         """,
         unsafe_allow_html=True,
@@ -375,15 +334,15 @@ else:
 
     st.markdown(
         """
-        <div style="background-color: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); padding: 14px; border-radius: 12px; margin-bottom: 15px;">
-            <div style="font-size: 13px; font-weight: 700; color: #ffffff; margin-bottom: 4px;">Neon Database</div>
-            <div style="font-size: 11px; color: #9ca3af; line-height: 1.4; margin-bottom: 10px;">Cloud synchronization active for school branches & records.</div>
-            <div style="background-color: rgba(255, 255, 255, 0.1); border-radius: 4px; height: 6px; width: 100%; margin-bottom: 10px; overflow: hidden;">
-                <div style="background-color: #a855f7; width: 65%; height: 100%;"></div>
+        <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; padding: 14px; border-radius: 12px; margin-bottom: 15px;">
+            <div style="font-size: 13px; font-weight: 700; color: #111827; margin-bottom: 4px;">Neon Database</div>
+            <div style="font-size: 11px; color: #4b5563; line-height: 1.4; margin-bottom: 10px;">Cloud synchronization active for school branches & records.</div>
+            <div style="background-color: #e5e7eb; border-radius: 4px; height: 6px; width: 100%; margin-bottom: 10px; overflow: hidden;">
+                <div style="background-color: #7c3aed; width: 65%; height: 100%;"></div>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 11px; color: #9ca3af;">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: #4b5563;">
                 <span>Active Sync</span>
-                <span style="color: #c084fc; cursor: pointer;">Upgrade Plan</span>
+                <span style="color: #7c3aed; cursor: pointer; font-weight: 600;">Upgrade Plan</span>
             </div>
         </div>
         """,
@@ -392,12 +351,12 @@ else:
 
     st.markdown(
         """
-        <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 5px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 5px; border-top: 1px solid #e5e7eb;">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <div style="background-color: #7c3aed; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px;">SK</div>
                 <div>
-                    <div style="font-size: 13px; font-weight: 600; color: #ffffff;">SSKAZAMA</div>
-                    <div style="font-size: 10px; color: #9ca3af;">Admin Portal</div>
+                    <div style="font-size: 13px; font-weight: 600; color: #111827;">SSKAZAMA</div>
+                    <div style="font-size: 10px; color: #4b5563;">Admin Portal</div>
                 </div>
             </div>
         </div>
