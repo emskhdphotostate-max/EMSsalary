@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Global Styling: Dark Navy Sidebar + Login & ERP Theme Integration
+# Global Styling: Dark Navy Sidebar + Custom Sidebar Button Theme
 if "authenticated" not in st.session_state:
   st.session_state.authenticated = False
 
@@ -79,7 +79,7 @@ else:
         .stApp {
             background-color: #ffffff;
         }
-        /* Professional Dark Sidebar Styling matching reference */
+        /* Professional Dark Sidebar Styling */
         section[data-testid="stSidebar"] {
             background-color: #0b192c !important;
             color: #ffffff !important;
@@ -88,6 +88,19 @@ else:
         section[data-testid="stSidebar"] p, 
         section[data-testid="stSidebar"] span {
             color: #cbd5e1 !important;
+        }
+        /* Force Streamlit Sidebar Buttons to Match Dark Theme Perfectly */
+        section[data-testid="stSidebar"] button {
+            background-color: #1e293b !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+        }
+        section[data-testid="stSidebar"] button:hover {
+            background-color: #334155 !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+            color: #ffffff !important;
         }
         .main-header {
             font-size: 26px;
@@ -304,7 +317,7 @@ else:
     st.markdown(
         f"""
         <div style="font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 1px; margin-bottom: 8px; text-transform: uppercase;">MAIN NAVIGATION</div>
-        <div style="display: flex; align-items: center; padding: 6px 10px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 15px;">
+        <div style="display: flex; align-items: center; padding: 8px 10px; background: rgba(255,255,255,0.06); border-radius: 6px; margin-bottom: 15px;">
             {logo_sidebar}
             <span style="font-size: 13px; color: #ffffff; font-weight: 700; line-height: 1.2;">EXCELLENCE SCHOOL</span>
         </div>
@@ -325,7 +338,7 @@ else:
 
     st.markdown(
         "<div style='font-size: 12px; font-weight: 600; color: #94a3b8;"
-        " margin-top: 10px; margin-bottom: 5px;'>MENU OPTIONS</div>",
+        " margin-top: 15px; margin-bottom: 8px;'>MENU OPTIONS</div>",
         unsafe_allow_html=True,
     )
 
@@ -344,22 +357,10 @@ else:
     clean_nav_mode = None
     for idx, opt in enumerate(nav_options):
       is_selected = st.session_state.nav_index == idx
-      bg_color = "rgba(255, 255, 255, 0.12)" if is_selected else "transparent"
-      text_color = "#ffffff" if is_selected else "#cbd5e1"
-      font_weight = "bold" if is_selected else "normal"
-
-      btn_html = f"""
-            <div style="background-color: {bg_color}; padding: 8px 12px; border-radius: 6px; margin-bottom: 4px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
-                <span style="color: {text_color}; font-size: 13px; font-weight: {font_weight};">{opt}</span>
-                <span style="color: {text_color}; font-size: 12px;">›</span>
-            </div>
-            """
-      st.markdown(btn_html, unsafe_allow_html=True)
       if st.button(
-          opt,
+          ("👉 " if is_selected else "     ") + opt,
           key=f"nav_btn_{idx}",
           use_container_width=True,
-          type="secondary" if not is_selected else "primary",
       ):
         st.session_state.nav_index = idx
         st.rerun()
