@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Professional Styling: Dark background ONLY for login, clean light theme for ERP dashboard
+# Global Styling: Dark Navy Sidebar + Login & ERP Theme Integration
 if "authenticated" not in st.session_state:
   st.session_state.authenticated = False
 
@@ -78,6 +78,16 @@ else:
         <style>
         .stApp {
             background-color: #ffffff;
+        }
+        /* Professional Dark Sidebar Styling matching reference */
+        section[data-testid="stSidebar"] {
+            background-color: #0b192c !important;
+            color: #ffffff !important;
+        }
+        section[data-testid="stSidebar"] .stSelectbox label, 
+        section[data-testid="stSidebar"] p, 
+        section[data-testid="stSidebar"] span {
+            color: #cbd5e1 !important;
         }
         .main-header {
             font-size: 26px;
@@ -287,15 +297,16 @@ if not st.session_state.authenticated:
 else:
   with st.sidebar:
     logo_sidebar = (
-        f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="32" style="border-radius: 6px; vertical-align: middle; margin-right: 8px;">'
+        f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="28" style="border-radius: 4px; vertical-align: middle; margin-right: 8px;">'
         if os.path.exists("LOGO.png")
-        else '<span style="font-size: 20px; vertical-align: middle; margin-right: 8px;">🎓</span>'
+        else '<span style="font-size: 18px; vertical-align: middle; margin-right: 8px;">🎓</span>'
     )
     st.markdown(
         f"""
-        <div style="display: flex; align-items: center; padding: 4px 0 12px 0;">
+        <div style="font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 1px; margin-bottom: 8px; text-transform: uppercase;">MAIN NAVIGATION</div>
+        <div style="display: flex; align-items: center; padding: 6px 10px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 15px;">
             {logo_sidebar}
-            <span style="font-size: 14px; color: #111827; font-weight: 700; line-height: 1.2;">EXCELLENCE MODEL SCHOOL</span>
+            <span style="font-size: 13px; color: #ffffff; font-weight: 700; line-height: 1.2;">EXCELLENCE SCHOOL</span>
         </div>
         """,
         unsafe_allow_html=True,
@@ -312,21 +323,53 @@ else:
         ],
     )
 
-    nav_mode = st.radio(
-        "Main Navigation",
-        [
-            "📊 Monthly Salary Sheet",
-            "➕ Add New Employee",
-            "directory Staff Directory",
-            "📅 Employee Yearly Ledger",
-            "💬 Salary Slip Generator",
-            "📈 Summary",
-        ],
-        label_visibility="collapsed",
+    st.markdown(
+        "<div style='font-size: 12px; font-weight: 600; color: #94a3b8;"
+        " margin-top: 10px; margin-bottom: 5px;'>MENU OPTIONS</div>",
+        unsafe_allow_html=True,
     )
 
-    clean_nav_mode = nav_mode.split(" ", 1)[1] if " " in nav_mode else nav_mode
+    nav_options = [
+        "📊 Monthly Salary Sheet",
+        "➕ Add New Employee",
+        "📂 Staff Directory",
+        "📅 Employee Yearly Ledger",
+        "💬 Salary Slip Generator",
+        "📈 Summary",
+    ]
 
+    if "nav_index" not in st.session_state:
+      st.session_state.nav_index = 0
+
+    clean_nav_mode = None
+    for idx, opt in enumerate(nav_options):
+      is_selected = st.session_state.nav_index == idx
+      bg_color = "rgba(255, 255, 255, 0.12)" if is_selected else "transparent"
+      text_color = "#ffffff" if is_selected else "#cbd5e1"
+      font_weight = "bold" if is_selected else "normal"
+
+      btn_html = f"""
+            <div style="background-color: {bg_color}; padding: 8px 12px; border-radius: 6px; margin-bottom: 4px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                <span style="color: {text_color}; font-size: 13px; font-weight: {font_weight};">{opt}</span>
+                <span style="color: {text_color}; font-size: 12px;">›</span>
+            </div>
+            """
+      st.markdown(btn_html, unsafe_allow_html=True)
+      if st.button(
+          opt,
+          key=f"nav_btn_{idx}",
+          use_container_width=True,
+          type="secondary" if not is_selected else "primary",
+      ):
+        st.session_state.nav_index = idx
+        st.rerun()
+
+    active_opt = nav_options[st.session_state.nav_index]
+    clean_nav_mode = (
+        active_opt.split(" ", 1)[1] if " " in active_opt else active_opt
+    )
+
+    st.markdown("<br>", unsafe_allow_html=True)
     month_filter = st.selectbox(
         "Select Month", list(MONTH_ORDER.keys()), index=7
     )
@@ -334,15 +377,15 @@ else:
 
     st.markdown(
         """
-        <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; padding: 14px; border-radius: 12px; margin-bottom: 15px;">
-            <div style="font-size: 13px; font-weight: 700; color: #111827; margin-bottom: 4px;">Neon Database</div>
-            <div style="font-size: 11px; color: #4b5563; line-height: 1.4; margin-bottom: 10px;">Cloud synchronization active for school branches & records.</div>
-            <div style="background-color: #e5e7eb; border-radius: 4px; height: 6px; width: 100%; margin-bottom: 10px; overflow: hidden;">
-                <div style="background-color: #7c3aed; width: 65%; height: 100%;"></div>
+        <div style="background-color: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 10px; margin-bottom: 15px;">
+            <div style="font-size: 12px; font-weight: 700; color: #ffffff; margin-bottom: 4px;">Neon Database</div>
+            <div style="font-size: 11px; color: #94a3b8; line-height: 1.4; margin-bottom: 8px;">Cloud synchronization active for branches.</div>
+            <div style="background-color: rgba(255, 255, 255, 0.1); border-radius: 4px; height: 5px; width: 100%; margin-bottom: 8px; overflow: hidden;">
+                <div style="background-color: #a855f7; width: 65%; height: 100%;"></div>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 11px; color: #4b5563;">
+            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8;">
                 <span>Active Sync</span>
-                <span style="color: #7c3aed; cursor: pointer; font-weight: 600;">Upgrade Plan</span>
+                <span style="color: #c084fc; font-weight: 600;">Upgrade</span>
             </div>
         </div>
         """,
@@ -351,12 +394,12 @@ else:
 
     st.markdown(
         """
-        <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 5px; border-top: 1px solid #e5e7eb;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="background-color: #7c3aed; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px;">SK</div>
+                <div style="background-color: #7c3aed; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px;">SK</div>
                 <div>
-                    <div style="font-size: 13px; font-weight: 600; color: #111827;">SSKAZAMA</div>
-                    <div style="font-size: 10px; color: #4b5563;">Admin Portal</div>
+                    <div style="font-size: 12px; font-weight: 600; color: #ffffff;">SSKAZAMA</div>
+                    <div style="font-size: 10px; color: #94a3b8;">Admin Portal</div>
                 </div>
             </div>
         </div>
