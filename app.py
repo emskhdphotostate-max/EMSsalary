@@ -330,7 +330,6 @@ else:
         unsafe_allow_html=True,
     )
 
-    # Footer Section with SSKAZAMA on top, Admin Portal below, and SK in the circle
     st.markdown(
         """
         <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 5px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
@@ -637,22 +636,6 @@ else:
                 """,
             (selected_campus, month_filter, r_no),
         )
-      elif is_eligible and existing_entry:
-        execute_non_query(
-            """
-                    UPDATE salaries SET staff_category = %s, designation = %s, name = %s, basic_salary = %s 
-                    WHERE campus = %s AND month_year = %s AND reg_no = %s;
-                """,
-            (
-                s_cat if s_cat else "Teaching Staff",
-                desig,
-                name,
-                effective_basic,
-                selected_campus,
-                month_filter,
-                r_no,
-            ),
-        )
 
     existing_rows = run_query(
         """
@@ -853,6 +836,15 @@ else:
         for idx, row in all_edited_combined.iterrows():
           if pd.isna(row["Name"]) or str(row["Name"]).strip() == "":
             continue
+          r_no = str(row["Reg No"]) if pd.notna(row["Reg No"]) else ""
+          name = str(row["Name"])
+          desig = str(row["Designation"]) if pd.notna(row["Designation"]) else ""
+          s_cat = (
+              str(row["Staff Category"])
+              if pd.notna(row["Staff Category"])
+              else "Teaching Staff"
+          )
+
           execute_non_query(
               """
                         INSERT INTO salaries (campus, reg_no, name, designation, staff_category, basic_salary, absent_days, 
@@ -861,14 +853,10 @@ else:
                     """,
               (
                   selected_campus,
-                  str(row["Reg No"]) if pd.notna(row["Reg No"]) else "",
-                  str(row["Name"]),
-                  str(row["Designation"])
-                  if pd.notna(row["Designation"])
-                  else "",
-                  str(row["Staff Category"])
-                  if pd.notna(row["Staff Category"])
-                  else "Teaching Staff",
+                  r_no,
+                  name,
+                  desig,
+                  s_cat,
                   float(row["Basic Salary"])
                   if pd.notna(row["Basic Salary"])
                   else 0,
@@ -886,7 +874,19 @@ else:
                   month_filter,
               ),
           )
-        st.success("✅ Monthly salary sheet saved successfully to Neon!")
+          # Also sync name/designation/reg_no update back to master employees table if needed
+          execute_non_query(
+              """
+                        UPDATE employees SET name = %s, designation = %s, staff_category = %s 
+                        WHERE campus = %s AND reg_no = %s;
+                    """,
+              (name, desig, s_cat, selected_campus, r_no),
+          )
+
+        st.success(
+            "✅ Monthly salary sheet & employee info saved successfully to"
+            " Neon!"
+        )
         st.rerun()
 
     with col_dl:
