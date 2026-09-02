@@ -14,121 +14,83 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Global Styling: Dark Navy Sidebar + Custom Sidebar Button Theme
-if "authenticated" not in st.session_state:
-  st.session_state.authenticated = False
-
-if not st.session_state.authenticated:
-  st.markdown(
-      """
-        <style>
-        .stApp {
-            background: radial-gradient(circle at 50% 20%, #311042 0%, #0f071a 100%);
-            background-attachment: fixed;
-        }
-        .login-card {
-            background: linear-gradient(145deg, rgba(30, 18, 48, 0.92) 0%, rgba(18, 10, 32, 0.95) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1.5px solid rgba(168, 85, 247, 0.25);
-            padding: 55px 50px;
-            border-radius: 24px;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 35px rgba(147, 51, 234, 0.25);
-            text-align: center;
-            width: 100%;
-            max-width: 520px;
-            margin: auto;
-        }
-        .login-title {
-            color: #f3e8ff;
-            font-size: 28px;
-            font-weight: 800;
-            margin-top: 18px;
-            letter-spacing: 0.8px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        .login-subtitle {
-            color: #d8b4fe;
-            font-size: 15px;
-            font-weight: 500;
-            margin-top: 8px;
-            margin-bottom: 35px;
-            letter-spacing: 0.3px;
-        }
-        .stTextInput label p {
-            color: #f3e8ff !important;
-            font-weight: 600 !important;
-            font-size: 15px !important;
-        }
-        .login-card input {
-            background-color: rgba(15, 7, 26, 0.95) !important;
-            color: #ffffff !important;
-            border: 1px solid rgba(168, 85, 247, 0.4) !important;
-            border-radius: 12px !important;
-            padding: 14px 16px !important;
-            font-size: 16px !important;
-        }
-        </style>
-        """,
-      unsafe_allow_html=True,
-  )
-else:
-  st.markdown(
-      """
-        <style>
-        .stApp {
-            background-color: #ffffff;
-        }
-        /* Professional Dark Sidebar Styling */
-        section[data-testid="stSidebar"] {
-            background-color: #0b192c !important;
-            color: #ffffff !important;
-        }
-        section[data-testid="stSidebar"] .stSelectbox label, 
-        section[data-testid="stSidebar"] p, 
-        section[data-testid="stSidebar"] span {
-            color: #cbd5e1 !important;
-        }
-        /* Force Streamlit Sidebar Buttons to Match Dark Theme Perfectly */
-        section[data-testid="stSidebar"] button {
-            background-color: #1e293b !important;
-            color: #ffffff !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            border-radius: 8px !important;
-            font-weight: 600 !important;
-        }
-        section[data-testid="stSidebar"] button:hover {
-            background-color: #334155 !important;
-            border-color: rgba(255, 255, 255, 0.2) !important;
-            color: #ffffff !important;
-        }
-        .main-header {
-            font-size: 26px;
-            font-weight: 800;
-            color: #111827;
-            text-align: center;
-            margin-bottom: 2px;
-        }
-        .sub-header {
-            font-size: 15px;
-            color: #4B5563;
-            text-align: center;
-            margin-bottom: 20px;
-            font-weight: 500;
-        }
-        .section-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #111827;
-            margin-top: 25px;
-            margin-bottom: 10px;
-            border-bottom: 2px solid #111827;
-            padding-bottom: 4px;
-        }
-        </style>
-        """,
-      unsafe_allow_html=True,
-  )
+# Professional Enterprise Deep Navy Theme Custom Styling
+st.markdown(
+    """
+    <style>
+    [data-testid="stSidebar"] {
+        background-color: #0b1329;
+        color: #9ca3af;
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    [data-testid="stSidebar"] .stSelectbox label, 
+    [data-testid="stSidebar"] .stRadio label, 
+    [data-testid="stSidebar"] div {
+        color: #e5e7eb !important;
+    }
+    [data-testid="stSidebar"] .stRadio {
+        margin-top: 5px;
+    }
+    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] {
+        gap: 6px !important;
+    }
+    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label {
+        background-color: transparent;
+        padding: 9px 12px;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label[data-checked="true"] {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        border-color: #3b82f6;
+        box-shadow: 0 4px 12px rgba(29, 78, 216, 0.4);
+    }
+    [data-testid="stSidebar"] button {
+        color: #ffffff !important;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        font-weight: 600;
+        border-radius: 8px !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+        transition: all 0.2s ease;
+    }
+    [data-testid="stSidebar"] button:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.5);
+    }
+    .main-header {
+        font-size: 26px;
+        font-weight: 800;
+        color: #111827;
+        text-align: center;
+        margin-bottom: 2px;
+    }
+    .sub-header {
+        font-size: 15px;
+        color: #4B5563;
+        text-align: center;
+        margin-bottom: 20px;
+        font-weight: 500;
+    }
+    .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #111827;
+        margin-top: 25px;
+        margin-bottom: 10px;
+        border-bottom: 2px solid #111827;
+        padding-bottom: 4px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 def init_connection():
@@ -263,67 +225,67 @@ def get_month_index(m_str):
   return MONTH_ORDER.get(m_str, 7)
 
 
+if "authenticated" not in st.session_state:
+  st.session_state.authenticated = False
+
 if not st.session_state.authenticated:
   logo_html = (
-      f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="105" style="border-radius: 16px; box-shadow: 0 6px 20px rgba(147,51,234,0.5); border: 2px solid rgba(216,180,254,0.3);">'
+      f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="90" style="margin-bottom: 10px; border-radius: 10px; box-shadow: 0 3px 8px rgba(0,0,0,0.15);">'
       if os.path.exists("LOGO.png")
       else '<h1 style="margin:0;">🎓</h1>'
   )
-
-  col1, col2, col3 = st.columns([1, 1.8, 1])
-  with col2:
-    st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
-    st.markdown(
-        f"""
-        <div class="login-card">
+  st.markdown(
+      f"""
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; margin-top: 40px; margin-bottom: 20px;">
             {logo_html}
-            <div class="login-title">EXCELLENCE MODEL SCHOOL</div>
-            <div class="login-subtitle">Salary Management ERP Portal</div>
+            <h1 style="color: #111827; margin: 5px 0 0 0; font-weight: 800; font-size: 32px;">EXCELLENCE MODEL SCHOOL</h1>
+            <p style="color: #4B5563; font-weight: 600; font-size: 16px; margin-top: 5px;">Salary Management ERP Portal</p>
+        </div>
+        """,
+      unsafe_allow_html=True,
+  )
+
+  col1, col2, col3 = st.columns([1, 1.2, 1])
+  with col2:
+    st.markdown(
+        """
+        <div style="background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 6px 20px rgba(17,24,39,0.08); border: 1px solid #e5e7eb;">
+            <h3 style="color: #111827; text-align: center; margin-bottom: 20px; font-size: 20px; font-weight: 700;">🔒 Secure System Login</h3>
         </div>
         """,
         unsafe_allow_html=True,
     )
-
-    with st.container():
-      password_input = st.text_input(
-          "🔒 Enter Secure System Password",
-          type="password",
-          key="login_pass",
-          placeholder="Enter access password...",
-      )
-      is_enter_pressed = (
-          st.session_state.get("login_pass", "") == "namuka112"
-          and password_input == "namuka112"
-      )
-      if (
-          st.button(
-              "🚀 Login to ERP Portal", use_container_width=True, type="primary"
-          )
-          or is_enter_pressed
-      ):
-        if password_input == "namuka112":
-          st.session_state.authenticated = True
-          st.success("Login Successful!")
-          st.rerun()
-        else:
-          st.error("⚠️ Invalid Password! Please try again.")
+    password_input = st.text_input(
+        "Enter Password", type="password", key="login_pass"
+    )
+    if st.button("Login to Portal", use_container_width=True, type="primary"):
+      if password_input == "namuka112":
+        st.session_state.authenticated = True
+        st.success("Login Successful!")
+        st.rerun()
+      else:
+        st.error("Invalid Password! Please try again.")
 else:
   with st.sidebar:
     logo_sidebar = (
-        f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="28" style="border-radius: 4px; vertical-align: middle; margin-right: 8px;">'
+        f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="34" style="border-radius: 6px; vertical-align: middle; margin-right: 8px;">'
         if os.path.exists("LOGO.png")
-        else '<span style="font-size: 18px; vertical-align: middle; margin-right: 8px;">🎓</span>'
+        else '<span style="font-size: 22px; vertical-align: middle; margin-right: 8px;">🎓</span>'
     )
     st.markdown(
         f"""
-        <div style="font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 1px; margin-bottom: 8px; text-transform: uppercase;">MAIN NAVIGATION</div>
-        <div style="display: flex; align-items: center; padding: 8px 10px; background: rgba(255,255,255,0.06); border-radius: 6px; margin-bottom: 15px;">
+        <div style="display: flex; align-items: center; padding: 4px 0 12px 0;">
             {logo_sidebar}
-            <span style="font-size: 13px; color: #ffffff; font-weight: 700; line-height: 1.2;">EXCELLENCE SCHOOL</span>
+            <span style="font-size: 20px; color: #ffffff; font-weight: 800; letter-spacing: 0.5px;">CleanTask</span>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+    st.text_input(
+        "Search", placeholder="Search...", label_visibility="collapsed"
+    )
+    st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
 
     selected_campus = st.selectbox(
         "Select Campus",
@@ -336,41 +298,21 @@ else:
         ],
     )
 
-    st.markdown(
-        "<div style='font-size: 12px; font-weight: 600; color: #94a3b8;"
-        " margin-top: 15px; margin-bottom: 8px;'>MENU OPTIONS</div>",
-        unsafe_allow_html=True,
+    nav_mode = st.radio(
+        "Main Navigation",
+        [
+            "📊 Monthly Salary Sheet",
+            "➕ Add New Employee",
+            "directory Staff Directory",
+            "📅 Employee Yearly Ledger",
+            "💬 Salary Slip Generator",
+            "📈 Summary",
+        ],
+        label_visibility="collapsed",
     )
 
-    nav_options = [
-        "📊 Monthly Salary Sheet",
-        "➕ Add New Employee",
-        "📂 Staff Directory",
-        "📅 Employee Yearly Ledger",
-        "💬 Salary Slip Generator",
-        "📈 Summary",
-    ]
+    clean_nav_mode = nav_mode.split(" ", 1)[1] if " " in nav_mode else nav_mode
 
-    if "nav_index" not in st.session_state:
-      st.session_state.nav_index = 0
-
-    clean_nav_mode = None
-    for idx, opt in enumerate(nav_options):
-      is_selected = st.session_state.nav_index == idx
-      if st.button(
-          ("👉 " if is_selected else "     ") + opt,
-          key=f"nav_btn_{idx}",
-          use_container_width=True,
-      ):
-        st.session_state.nav_index = idx
-        st.rerun()
-
-    active_opt = nav_options[st.session_state.nav_index]
-    clean_nav_mode = (
-        active_opt.split(" ", 1)[1] if " " in active_opt else active_opt
-    )
-
-    st.markdown("<br>", unsafe_allow_html=True)
     month_filter = st.selectbox(
         "Select Month", list(MONTH_ORDER.keys()), index=7
     )
@@ -378,29 +320,30 @@ else:
 
     st.markdown(
         """
-        <div style="background-color: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); padding: 12px; border-radius: 10px; margin-bottom: 15px;">
-            <div style="font-size: 12px; font-weight: 700; color: #ffffff; margin-bottom: 4px;">Neon Database</div>
-            <div style="font-size: 11px; color: #94a3b8; line-height: 1.4; margin-bottom: 8px;">Cloud synchronization active for branches.</div>
-            <div style="background-color: rgba(255, 255, 255, 0.1); border-radius: 4px; height: 5px; width: 100%; margin-bottom: 8px; overflow: hidden;">
-                <div style="background-color: #a855f7; width: 65%; height: 100%;"></div>
+        <div style="background-color: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); padding: 14px; border-radius: 12px; margin-bottom: 15px;">
+            <div style="font-size: 13px; font-weight: 700; color: #ffffff; margin-bottom: 4px;">Neon Database</div>
+            <div style="font-size: 11px; color: #9ca3af; line-height: 1.4; margin-bottom: 10px;">Cloud synchronization active for school branches & records.</div>
+            <div style="background-color: rgba(255, 255, 255, 0.1); border-radius: 4px; height: 6px; width: 100%; margin-bottom: 10px; overflow: hidden;">
+                <div style="background-color: #3b82f6; width: 65%; height: 100%;"></div>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8;">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: #9ca3af;">
                 <span>Active Sync</span>
-                <span style="color: #c084fc; font-weight: 600;">Upgrade</span>
+                <span style="color: #60a5fa; cursor: pointer;">Upgrade Plan</span>
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+    # Updated Footer Section with SSKAZAMA
     st.markdown(
         """
-        <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 5px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="background-color: #7c3aed; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px;">SK</div>
+                <div style="background-color: #3b82f6; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px;">MT</div>
                 <div>
-                    <div style="font-size: 12px; font-weight: 600; color: #ffffff;">SSKAZAMA</div>
-                    <div style="font-size: 10px; color: #94a3b8;">Admin Portal</div>
+                    <div style="font-size: 13px; font-weight: 600; color: #ffffff;">Muhammad Tahir</div>
+                    <div style="font-size: 10px; color: #9ca3af;">SSKAZAMA</div>
                 </div>
             </div>
         </div>
@@ -699,6 +642,22 @@ else:
                 """,
             (selected_campus, month_filter, r_no),
         )
+      elif is_eligible and existing_entry:
+        execute_non_query(
+            """
+                    UPDATE salaries SET staff_category = %s, designation = %s, name = %s, basic_salary = %s 
+                    WHERE campus = %s AND month_year = %s AND reg_no = %s;
+                """,
+            (
+                s_cat if s_cat else "Teaching Staff",
+                desig,
+                name,
+                effective_basic,
+                selected_campus,
+                month_filter,
+                r_no,
+            ),
+        )
 
     existing_rows = run_query(
         """
@@ -899,15 +858,6 @@ else:
         for idx, row in all_edited_combined.iterrows():
           if pd.isna(row["Name"]) or str(row["Name"]).strip() == "":
             continue
-          r_no = str(row["Reg No"]) if pd.notna(row["Reg No"]) else ""
-          name = str(row["Name"])
-          desig = str(row["Designation"]) if pd.notna(row["Designation"]) else ""
-          s_cat = (
-              str(row["Staff Category"])
-              if pd.notna(row["Staff Category"])
-              else "Teaching Staff"
-          )
-
           execute_non_query(
               """
                         INSERT INTO salaries (campus, reg_no, name, designation, staff_category, basic_salary, absent_days, 
@@ -916,10 +866,14 @@ else:
                     """,
               (
                   selected_campus,
-                  r_no,
-                  name,
-                  desig,
-                  s_cat,
+                  str(row["Reg No"]) if pd.notna(row["Reg No"]) else "",
+                  str(row["Name"]),
+                  str(row["Designation"])
+                  if pd.notna(row["Designation"])
+                  else "",
+                  str(row["Staff Category"])
+                  if pd.notna(row["Staff Category"])
+                  else "Teaching Staff",
                   float(row["Basic Salary"])
                   if pd.notna(row["Basic Salary"])
                   else 0,
@@ -937,18 +891,7 @@ else:
                   month_filter,
               ),
           )
-          execute_non_query(
-              """
-                        UPDATE employees SET name = %s, designation = %s, staff_category = %s 
-                        WHERE campus = %s AND reg_no = %s;
-                    """,
-              (name, desig, s_cat, selected_campus, r_no),
-          )
-
-        st.success(
-            "✅ Monthly salary sheet & employee info saved successfully to"
-            " Neon!"
-        )
+        st.success("✅ Monthly salary sheet saved successfully to Neon!")
         st.rerun()
 
     with col_dl:
@@ -1160,7 +1103,14 @@ else:
 
         pdf.set_font("Arial", "B", 13)
         pdf.set_text_color(17, 24, 39)
-        pdf.cell(0, 8, f"SUMMARY (SALARY) - {month_filter}", 0, 1, "C")
+        pdf.cell(
+            0,
+            8,
+            f"SUMMARY (SALARY) - {month_filter}",
+            0,
+            1,
+            "C",
+        )
         pdf.ln(3)
 
         pdf.set_font("Arial", "B", 9)
