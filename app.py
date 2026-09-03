@@ -307,6 +307,32 @@ def init_db():
 
 init_db()
 
+
+def page_header(subtitle):
+  """Renders the branded page header with logo, title and subtitle."""
+  logo_tag = ""
+  if os.path.exists("LOGO.png"):
+    logo_b64_header = base64.b64encode(open("LOGO.png", "rb").read()).decode()
+    logo_tag = (
+        f'<img src="data:image/png;base64,{logo_b64_header}" width="58" '
+        'style="border-radius: 12px; box-shadow: 0 6px 16px rgba(124,58,237,0.25); '
+        'background:#fff; padding:4px;">'
+    )
+  st.markdown(
+      f"""
+      <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:4px; flex-wrap:wrap;">
+          {logo_tag}
+          <div style="text-align:left;">
+              <div class="main-header" style="text-align:left; margin-bottom:0;">EXCELLENCE MODEL SCHOOL</div>
+              <div class="sub-header" style="text-align:left; margin-bottom:0;">{subtitle}</div>
+          </div>
+      </div>
+      <div style="height:22px;"></div>
+      """,
+      unsafe_allow_html=True,
+  )
+
+
 MONTH_ORDER = {
     "January 2026": 1,
     "February 2026": 2,
@@ -571,14 +597,7 @@ else:
       st.rerun()
 
   if clean_nav_mode == "Add New Employee":
-    st.markdown(
-        "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        "<div class='sub-header'>Add New Employee & Staff Registration</div>",
-        unsafe_allow_html=True,
-    )
+    page_header("Add New Employee &amp; Staff Registration")
 
     col1, col2 = st.columns(2)
     with col1:
@@ -665,15 +684,7 @@ else:
           st.balloons()
 
   elif clean_nav_mode == "Staff Directory":
-    st.markdown(
-        "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        f"<div class='sub-header'>{selected_campus.upper()} BRANCH — Staff"
-        " Directory & Increments</div>",
-        unsafe_allow_html=True,
-    )
+    page_header(f"{selected_campus.upper()} BRANCH — Staff Directory &amp; Increments")
 
     emp_rows = run_query(
         """
@@ -790,15 +801,7 @@ else:
       st.rerun()
 
   elif clean_nav_mode == "Monthly Salary Sheet":
-    st.markdown(
-        "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        f"<div class='sub-header'>{selected_campus.upper()} BRANCH — Salary Sheet"
-        f" ({month_filter})</div>",
-        unsafe_allow_html=True,
-    )
+    page_header(f"{selected_campus.upper()} BRANCH — Salary Sheet ({month_filter})")
 
     current_m_idx = get_month_index(month_filter)
     master_emps = run_query(
@@ -1459,15 +1462,7 @@ else:
         )
 
   elif clean_nav_mode == "Employee Yearly Ledger":
-    st.markdown(
-        "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        f"<div class='sub-header'>{selected_campus.upper()} BRANCH — Employee"
-        " Yearly Salary Ledger</div>",
-        unsafe_allow_html=True,
-    )
+    page_header(f"{selected_campus.upper()} BRANCH — Employee Yearly Salary Ledger")
 
     emp_names_raw = run_query(
         "SELECT DISTINCT name FROM salaries WHERE campus = %s ORDER BY name;",
@@ -1639,15 +1634,7 @@ else:
       st.info("No salary records available for this month.")
 
   elif clean_nav_mode == "Summary":
-    st.markdown(
-        "<div class='main-header'>EXCELLENCE MODEL SCHOOL</div>",
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        f"<div class='sub-header'>CONSOLIDATED SALARY SUMMARY REPORT —"
-        f" {month_filter}</div>",
-        unsafe_allow_html=True,
-    )
+    page_header(f"CONSOLIDATED SALARY SUMMARY REPORT — {month_filter}")
 
     sum_query = """
             SELECT campus, COUNT(id) as total_staff, SUM(basic_salary) as total_basic 
