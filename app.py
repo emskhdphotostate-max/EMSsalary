@@ -14,78 +14,180 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Professional Enterprise Deep Navy Theme Custom Styling
+# Excellence Model School — Purple/Noir Brand Theme
 st.markdown(
     """
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+        --emc-purple: #7c3aed;
+        --emc-purple-dark: #5b21b6;
+        --emc-purple-light: #a78bfa;
+        --emc-ink: #111827;
+        --emc-ink-soft: #1f2937;
+        --emc-muted: #6b7280;
+    }
+
+    html, body, [class*="css"] { font-family: 'Inter', 'Poppins', sans-serif; }
+
+    /* ---------- App background ---------- */
+    [data-testid="stAppViewContainer"] {
+        background: radial-gradient(circle at 10% 0%, #f5f1ff 0%, #ffffff 35%, #ffffff 100%);
+    }
+    [data-testid="stHeader"] { background: transparent; }
+
+    /* ---------- Sidebar ---------- */
     [data-testid="stSidebar"] {
-        background-color: #0b1329;
-        color: #9ca3af;
-        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        background: linear-gradient(180deg, #150a2e 0%, #1c0f3d 45%, #0b0715 100%);
+        color: #d8d3ea;
+        border-right: 1px solid rgba(167, 139, 250, 0.15);
     }
-    [data-testid="stSidebar"] .stSelectbox label, 
-    [data-testid="stSidebar"] .stRadio label, 
+    [data-testid="stSidebar"] * { font-family: 'Inter', sans-serif; }
+    [data-testid="stSidebar"] .stSelectbox label,
+    [data-testid="stSidebar"] .stRadio label,
     [data-testid="stSidebar"] div {
-        color: #e5e7eb !important;
+        color: #e9e6f7 !important;
     }
-    [data-testid="stSidebar"] .stRadio {
-        margin-top: 5px;
+    [data-testid="stSidebar"] [data-baseweb="select"] > div {
+        background-color: rgba(255,255,255,0.06) !important;
+        border-color: rgba(167, 139, 250, 0.35) !important;
+        border-radius: 10px !important;
     }
-    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] {
-        gap: 6px !important;
-    }
+    [data-testid="stSidebar"] .stRadio { margin-top: 5px; }
+    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] { gap: 7px !important; }
     [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label {
-        background-color: transparent;
-        padding: 9px 12px;
-        border-radius: 8px;
-        border: 1px solid transparent;
+        background-color: rgba(255, 255, 255, 0.03);
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
         transition: all 0.2s ease;
         cursor: pointer;
+        font-weight: 500;
     }
     [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label:hover {
-        background-color: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
+        background-color: rgba(167, 139, 250, 0.12);
+        border-color: rgba(167, 139, 250, 0.35);
+        transform: translateX(2px);
     }
     [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label[data-checked="true"] {
-        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-        border-color: #3b82f6;
-        box-shadow: 0 4px 12px rgba(29, 78, 216, 0.4);
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        border-color: #a78bfa;
+        box-shadow: 0 4px 14px rgba(124, 58, 237, 0.45);
+        color: #ffffff !important;
     }
     [data-testid="stSidebar"] button {
         color: #ffffff !important;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%) !important;
         font-weight: 600;
-        border-radius: 8px !important;
+        border-radius: 10px !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+        box-shadow: 0 3px 10px rgba(109, 40, 217, 0.35);
         transition: all 0.2s ease;
     }
     [data-testid="stSidebar"] button:hover {
-        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
-        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.5);
+        background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%) !important;
+        box-shadow: 0 5px 16px rgba(109, 40, 217, 0.55);
+        transform: translateY(-1px);
     }
+    [data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.08); }
+
+    /* ---------- Headings ---------- */
     .main-header {
-        font-size: 26px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 30px;
         font-weight: 800;
-        color: #111827;
+        background: linear-gradient(90deg, #4c1d95, #7c3aed 55%, #a78bfa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
         text-align: center;
         margin-bottom: 2px;
+        letter-spacing: 0.3px;
     }
     .sub-header {
         font-size: 15px;
-        color: #4B5563;
+        color: #6b7280;
         text-align: center;
-        margin-bottom: 20px;
-        font-weight: 500;
+        margin-bottom: 22px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
     }
     .section-title {
-        font-size: 18px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 17px;
         font-weight: 700;
         color: #111827;
-        margin-top: 25px;
-        margin-bottom: 10px;
-        border-bottom: 2px solid #111827;
-        padding-bottom: 4px;
+        margin-top: 28px;
+        margin-bottom: 12px;
+        padding: 10px 16px;
+        background: linear-gradient(90deg, rgba(124,58,237,0.10), rgba(124,58,237,0.01));
+        border-left: 4px solid #7c3aed;
+        border-radius: 0 8px 8px 0;
+    }
+
+    /* ---------- Buttons (main area) ---------- */
+    .stButton > button, .stDownloadButton > button {
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease !important;
+    }
+    .stButton > button[kind="primary"], .stDownloadButton > button {
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%) !important;
+        border: none !important;
+        color: #fff !important;
+        box-shadow: 0 4px 12px rgba(109, 40, 217, 0.35) !important;
+    }
+    .stButton > button[kind="primary"]:hover, .stDownloadButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(109, 40, 217, 0.5) !important;
+    }
+
+    /* ---------- Inputs ---------- */
+    .stTextInput input, .stNumberInput input, [data-baseweb="select"] > div {
+        border-radius: 10px !important;
+        border-color: #e5d9ff !important;
+    }
+    .stTextInput input:focus, .stNumberInput input:focus {
+        border-color: #7c3aed !important;
+        box-shadow: 0 0 0 1px #7c3aed !important;
+    }
+
+    /* ---------- Metrics ---------- */
+    [data-testid="stMetric"] {
+        background: linear-gradient(160deg, #ffffff 0%, #f7f3ff 100%);
+        border: 1px solid #ece3ff;
+        padding: 16px 18px;
+        border-radius: 14px;
+        box-shadow: 0 4px 14px rgba(124,58,237,0.08);
+    }
+    [data-testid="stMetricLabel"] { color: #6b7280 !important; font-weight: 600; }
+    [data-testid="stMetricValue"] { color: #4c1d95 !important; font-weight: 800; }
+
+    /* ---------- DataFrames / Data editor ---------- */
+    [data-testid="stDataFrame"], [data-testid="stDataEditor"] {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #ece3ff !important;
+        box-shadow: 0 2px 10px rgba(17,24,39,0.05);
+    }
+
+    /* ---------- Misc ---------- */
+    ::-webkit-scrollbar { width: 9px; height: 9px; }
+    ::-webkit-scrollbar-thumb { background: #c4b5fd; border-radius: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+
+    .emc-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        background: rgba(124,58,237,0.1);
+        color: #6d28d9;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
     }
     </style>
     """,
@@ -229,36 +331,130 @@ if "authenticated" not in st.session_state:
   st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
-  logo_html = (
-      f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="90" style="margin-bottom: 10px; border-radius: 10px; box-shadow: 0 3px 8px rgba(0,0,0,0.15);">'
+  logo_b64 = (
+      base64.b64encode(open("LOGO.png", "rb").read()).decode()
       if os.path.exists("LOGO.png")
-      else '<h1 style="margin:0;">🎓</h1>'
+      else ""
   )
+  logo_html = (
+      f'<img src="data:image/png;base64,{logo_b64}" width="92" style="border-radius: 18px; box-shadow: 0 10px 24px rgba(124,58,237,0.35); background:#fff; padding:6px;">'
+      if logo_b64
+      else '<div style="font-size:56px;">🎓</div>'
+  )
+
+  st.markdown(
+      """
+      <style>
+      [data-testid="stAppViewContainer"] {
+          background: radial-gradient(circle at 20% -10%, #2a1454 0%, #150a2e 45%, #0b0715 100%) !important;
+      }
+      [data-testid="stHeader"] { background: transparent !important; }
+      .login-hero {
+          display: flex; flex-direction: column; align-items: center; text-align: center;
+          margin-top: 48px; margin-bottom: 26px;
+      }
+      .login-hero h1 {
+          font-family: 'Poppins', sans-serif;
+          color: #ffffff; font-weight: 800; font-size: 34px; margin: 16px 0 4px 0;
+          letter-spacing: 0.4px;
+      }
+      .login-hero p {
+          color: #c4b5fd; font-weight: 600; font-size: 15px; letter-spacing: 1px;
+          text-transform: uppercase; margin: 0;
+      }
+      .login-card-wrap {
+          background: rgba(255,255,255,0.06);
+          backdrop-filter: blur(14px);
+          border: 1px solid rgba(167,139,250,0.25);
+          border-radius: 20px;
+          padding: 34px 32px 26px 32px;
+          box-shadow: 0 20px 45px rgba(0,0,0,0.35);
+      }
+      .login-card-wrap h3 {
+          color: #fff; text-align: center; margin: 0 0 6px 0;
+          font-size: 20px; font-weight: 700; font-family: 'Poppins', sans-serif;
+      }
+      .login-card-wrap .login-sub {
+          text-align:center; color:#a7a0c4; font-size:12.5px; margin-bottom:20px;
+      }
+      .login-card-wrap label, .login-card-wrap p { color: #e9e6f7 !important; }
+      .login-card-wrap .stTextInput input {
+          background: rgba(255,255,255,0.08) !important;
+          border: 1px solid rgba(167,139,250,0.35) !important;
+          color: #fff !important;
+          border-radius: 10px !important;
+      }
+      .login-card-wrap .stTextInput input::placeholder { color: #9891b5 !important; }
+      .login-features {
+          display: flex; justify-content: center; gap: 22px; margin-top: 26px; flex-wrap: wrap;
+      }
+      .login-feature {
+          display:flex; flex-direction:column; align-items:center; gap:6px;
+          color: #c4b5fd; font-size: 11.5px; font-weight: 600; text-align:center; max-width:110px;
+      }
+      .login-feature .ico {
+          width:38px; height:38px; border-radius:50%;
+          background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.3);
+          display:flex; align-items:center; justify-content:center; font-size:17px;
+      }
+      .login-footer {
+          text-align:center; color:#6b6285; font-size:11px; margin-top:34px; letter-spacing:0.3px;
+      }
+      </style>
+      """,
+      unsafe_allow_html=True,
+  )
+
   st.markdown(
       f"""
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; margin-top: 40px; margin-bottom: 20px;">
+        <div class="login-hero">
             {logo_html}
-            <h1 style="color: #111827; margin: 5px 0 0 0; font-weight: 800; font-size: 32px;">EXCELLENCE MODEL SCHOOL</h1>
-            <p style="color: #4B5563; font-weight: 600; font-size: 16px; margin-top: 5px;">Salary Management ERP Portal</p>
+            <h1>EXCELLENCE MODEL SCHOOL</h1>
+            <p>Salary Management ERP Portal</p>
         </div>
         """,
       unsafe_allow_html=True,
   )
 
-  col1, col2, col3 = st.columns([1, 1.2, 1])
+  col1, col2, col3 = st.columns([1, 1.15, 1])
   with col2:
+    st.markdown('<div class="login-card-wrap">', unsafe_allow_html=True)
     st.markdown(
         """
-        <div style="background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 6px 20px rgba(17,24,39,0.08); border: 1px solid #e5e7eb;">
-            <h3 style="color: #111827; text-align: center; margin-bottom: 20px; font-size: 20px; font-weight: 700;">🔒 Secure System Login</h3>
-        </div>
+        <h3>🔐 Secure System Login</h3>
+        <div class="login-sub">Enter your administrator password to continue</div>
         """,
         unsafe_allow_html=True,
     )
     password_input = st.text_input(
-        "Enter Password", type="password", key="login_pass"
+        "Password",
+        type="password",
+        key="login_pass",
+        placeholder="Enter your password",
+        label_visibility="collapsed",
     )
-    if st.button("Login to Portal", use_container_width=True, type="primary"):
+    login_clicked = st.button(
+        "Login to Portal", use_container_width=True, type="primary"
+    )
+    st.markdown(
+        """
+        <div class="login-features">
+            <div class="login-feature"><div class="ico">🏫</div>5 Campuses</div>
+            <div class="login-feature"><div class="ico">☁️</div>Cloud Synced</div>
+            <div class="login-feature"><div class="ico">🧾</div>Auto Payslips</div>
+            <div class="login-feature"><div class="ico">📊</div>Live Reports</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div class='login-footer'>© 2026 Excellence Model School — All"
+        " Rights Reserved</div>",
+        unsafe_allow_html=True,
+    )
+
+    if login_clicked:
       if password_input == "namuka112":
         st.session_state.authenticated = True
         st.success("Login Successful!")
@@ -268,20 +464,28 @@ if not st.session_state.authenticated:
 else:
   with st.sidebar:
     logo_sidebar = (
-        f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="32" style="border-radius: 6px; vertical-align: middle; margin-right: 8px;">'
+        f'<img src="data:image/png;base64,{base64.b64encode(open("LOGO.png", "rb").read()).decode()}" width="38" style="border-radius: 9px; vertical-align: middle; margin-right: 10px; background:#fff; padding:3px;">'
         if os.path.exists("LOGO.png")
-        else '<span style="font-size: 20px; vertical-align: middle; margin-right: 8px;">🎓</span>'
+        else '<span style="font-size: 22px; vertical-align: middle; margin-right: 8px;">🎓</span>'
     )
     st.markdown(
         f"""
-        <div style="display: flex; align-items: center; padding: 4px 0 12px 0;">
+        <div style="display: flex; align-items: center; padding: 6px 4px 18px 4px; border-bottom: 1px solid rgba(167,139,250,0.18); margin-bottom: 16px;">
             {logo_sidebar}
-            <span style="font-size: 14px; color: #ffffff; font-weight: 700; line-height: 1.2;">EXCELLENCE MODEL SCHOOL</span>
+            <div style="line-height: 1.25;">
+                <div style="font-size: 14px; color: #ffffff; font-weight: 800; letter-spacing:0.3px;">EXCELLENCE MODEL SCHOOL</div>
+                <div style="font-size: 10.5px; color: #a78bfa; font-weight: 600; letter-spacing:0.6px;">SALARY ERP PORTAL</div>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+    st.markdown(
+        "<div style='font-size:11px; color:#a78bfa; font-weight:700;"
+        " letter-spacing:0.8px; margin-bottom:4px;'>🏫 CAMPUS</div>",
+        unsafe_allow_html=True,
+    )
     selected_campus = st.selectbox(
         "Select Campus",
         [
@@ -291,16 +495,22 @@ else:
             "Sony Campus",
             "Park View",
         ],
+        label_visibility="collapsed",
     )
 
+    st.markdown(
+        "<div style='font-size:11px; color:#a78bfa; font-weight:700;"
+        " letter-spacing:0.8px; margin:16px 0 6px 0;'>☰ MAIN NAVIGATION</div>",
+        unsafe_allow_html=True,
+    )
     nav_mode = st.radio(
         "Main Navigation",
         [
             "📊 Monthly Salary Sheet",
             "➕ Add New Employee",
-            "directory Staff Directory",
+            "📁 Staff Directory",
             "📅 Employee Yearly Ledger",
-            "💬 Salary Slip Generator",
+            "🧾 Salary Slip Generator",
             "📈 Summary",
         ],
         label_visibility="collapsed",
@@ -308,22 +518,33 @@ else:
 
     clean_nav_mode = nav_mode.split(" ", 1)[1] if " " in nav_mode else nav_mode
 
+    st.markdown(
+        "<div style='font-size:11px; color:#a78bfa; font-weight:700;"
+        " letter-spacing:0.8px; margin:16px 0 6px 0;'>🗓️ MONTH</div>",
+        unsafe_allow_html=True,
+    )
     month_filter = st.selectbox(
-        "Select Month", list(MONTH_ORDER.keys()), index=7
+        "Select Month",
+        list(MONTH_ORDER.keys()),
+        index=7,
+        label_visibility="collapsed",
     )
     st.markdown("<br>", unsafe_allow_html=True)
 
     st.markdown(
         """
-        <div style="background-color: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); padding: 14px; border-radius: 12px; margin-bottom: 15px;">
-            <div style="font-size: 13px; font-weight: 700; color: #ffffff; margin-bottom: 4px;">Neon Database</div>
-            <div style="font-size: 11px; color: #9ca3af; line-height: 1.4; margin-bottom: 10px;">Cloud synchronization active for school branches & records.</div>
-            <div style="background-color: rgba(255, 255, 255, 0.1); border-radius: 4px; height: 6px; width: 100%; margin-bottom: 10px; overflow: hidden;">
-                <div style="background-color: #3b82f6; width: 65%; height: 100%;"></div>
+        <div style="background: linear-gradient(135deg, rgba(139,92,246,0.14), rgba(109,40,217,0.06)); border: 1px solid rgba(167, 139, 250, 0.25); padding: 15px; border-radius: 14px; margin-bottom: 15px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                <span style="width:8px; height:8px; border-radius:50%; background:#34d399; box-shadow:0 0 8px #34d399; display:inline-block;"></span>
+                <div style="font-size: 13px; font-weight: 700; color: #ffffff;">Neon Database</div>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 11px; color: #9ca3af;">
-                <span>Active Sync</span>
-                <span style="color: #60a5fa; cursor: pointer;">Upgrade Plan</span>
+            <div style="font-size: 11px; color: #c4b5fd; line-height: 1.4; margin-bottom: 10px;">Cloud synchronization active for school branches &amp; records.</div>
+            <div style="background-color: rgba(255, 255, 255, 0.1); border-radius: 4px; height: 6px; width: 100%; margin-bottom: 10px; overflow: hidden;">
+                <div style="background: linear-gradient(90deg, #a78bfa, #7c3aed); width: 100%; height: 100%;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: #a78bfa;">
+                <span>● Active Sync</span>
+                <span style="color: #c4b5fd; cursor: pointer;">Upgrade Plan</span>
             </div>
         </div>
         """,
@@ -332,12 +553,12 @@ else:
 
     st.markdown(
         """
-        <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 5px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 4px 12px 4px; border-top: 1px solid rgba(167,139,250,0.18);">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="background-color: #3b82f6; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px;">SK</div>
+                <div style="background: linear-gradient(135deg, #a78bfa, #6d28d9); color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; box-shadow: 0 2px 8px rgba(124,58,237,0.5);">SK</div>
                 <div>
-                    <div style="font-size: 13px; font-weight: 600; color: #ffffff;">SSKAZAMA</div>
-                    <div style="font-size: 10px; color: #9ca3af;">Admin Portal</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #ffffff;">SSKAZAMA</div>
+                    <div style="font-size: 10px; color: #a78bfa;">Admin Portal</div>
                 </div>
             </div>
         </div>
@@ -801,7 +1022,7 @@ else:
         sub_final = edited_cat_df["Total Final Salary"].sum()
         st.markdown(
             f"""
-            <div style="background-color: #f3f4f6; padding: 10px 15px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; display: flex; justify-content: space-between; border-left: 5px solid #111827;">
+            <div style="background: linear-gradient(90deg, rgba(124,58,237,0.08), rgba(124,58,237,0.01)); padding: 10px 15px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; display: flex; justify-content: space-between; border-left: 5px solid #7c3aed;">
                 <span>Total {cat}:</span>
                 <span>Basic: Rs. {sub_basic:,.0f} | Deductions: Rs. {sub_ded:,.1f} | <span style="color: green;">Final Payout: Rs. {sub_final:,.0f}</span></span>
             </div>
@@ -819,7 +1040,7 @@ else:
       grand_final = all_edited_combined["Total Final Salary"].sum()
       st.markdown(
           f"""
-          <div style="background: linear-gradient(135deg, #111827 0%, #1f2937 100%); color: white; padding: 15px 20px; border-radius: 8px; font-weight: bold; font-size: 16px; margin-top: 15px; margin-bottom: 25px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+          <div style="background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 55%, #6d28d9 100%); color: white; padding: 16px 20px; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 15px; margin-bottom: 25px; text-align: center; box-shadow: 0 6px 18px rgba(109,40,217,0.35);">
               🏆 GRAND TOTAL ({selected_campus.upper()} BRANCH) — Basic: Rs. {grand_basic:,.0f} | Deductions: Rs. {grand_ded:,.1f} | Final Payout: Rs. {grand_final:,.0f}
           </div>
           """,
@@ -1356,13 +1577,13 @@ else:
 
         st.markdown(
             f"""
-            <div style="border: 2px solid #111827; padding: 25px; border-radius: 10px; background-color: #ffffff; color: #000000; max-width: 700px; margin: auto;">
+            <div style="border: 1px solid #ece3ff; padding: 28px; border-radius: 16px; background-color: #ffffff; color: #000000; max-width: 700px; margin: auto; box-shadow: 0 10px 30px rgba(124,58,237,0.12);">
                 <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 5px;">
                     {logo_img_tag}
-                    <h3 style="color: #111827; margin: 0;">EXCELLENCE MODEL SCHOOL</h3>
+                    <h3 style="color: #4c1d95; margin: 0; font-family:'Poppins',sans-serif;">EXCELLENCE MODEL SCHOOL</h3>
                 </div>
                 <p style="text-align: center; font-size: 13px; color: gray; margin-top: 2px;">Campus: {selected_campus} | Salary Slip for {month_filter}</p>
-                <hr style="border: 1px solid #111827;">
+                <hr style="border: none; border-top: 2px solid #7c3aed; opacity: 0.5;">
                 <table style="width: 100%; font-size: 14px; margin-bottom: 15px;">
                     <tr>
                         <td><b>Employee Name:</b> {name}</td>
@@ -1373,8 +1594,8 @@ else:
                         <td><b>Month:</b> {month_filter}</td>
                     </tr>
                 </table>
-                <table style="width: 100%; border-collapse: collapse; font-size: 14px;" border="1">
-                    <tr style="background-color: #111827; color: white;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px; border-radius:8px; overflow:hidden;" border="1">
+                    <tr style="background: linear-gradient(135deg, #4c1d95, #7c3aed); color: white;">
                         <th style="padding: 6px; text-align: left;">Earnings / Particulars</th>
                         <th style="padding: 6px; text-align: right;">Amount (Rs.)</th>
                         <th style="padding: 6px; text-align: left;">Deductions / Details</th>
